@@ -62,6 +62,12 @@
       color: black;
       font-weight: bold;
     }
+
+    .warning {
+      color: red;
+      font-weight: bold;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body onload="initPage()">
@@ -69,17 +75,11 @@
   <div class="block" id="timeDisplay"></div>
   <div class="block" id="countryDisplay">Pays : Côte d'Ivoire</div>
 
-  <div class="block">
-    <label for="gameSelect">Jeu :</label>
-    <select id="gameSelect">
-      <option>Aviator</option>
-      <option>Lucky Jet</option>
-      <option>Mines</option>
-    </select>
-  </div>
+  <div class="block" id="warningMessage"></div>
 
   <div class="block">
     <button onclick="startPrediction()">Démarrer la prédiction</button>
+    <button onclick="logout()">Déconnexion</button>
   </div>
 
   <div id="loader">Chargement...</div>
@@ -88,7 +88,9 @@
   <script>
     function initPage() {
       const id = localStorage.getItem("PredixUserID") || "Inconnu";
+      const game = localStorage.getItem("PredixGame") || "Aviator";
       document.getElementById("userIdDisplay").innerText = `ID: ${id}`;
+      document.getElementById("gameSelect").value = game;
       updateTime();
       setInterval(updateTime, 1000);
     }
@@ -104,7 +106,14 @@
       const reliability = Math.floor(Math.random() * (97 - 25 + 1)) + 25;
       const heure = new Date().toLocaleTimeString();
       const date = new Date().toLocaleDateString();
-      const jeu = document.getElementById("gameSelect").value;
+      const jeu = localStorage.getItem("PredixGame") || "Aviator";
+
+      // Avertissement pour les cotes trop élevées
+      if (signal > 250) {
+        document.getElementById("warningMessage").innerText = "Alerte : Cote trop élevée !";
+      } else {
+        document.getElementById("warningMessage").innerText = "";
+      }
 
       document.getElementById("loader").style.display = 'block';
       document.getElementById("result").style.display = 'none';
@@ -122,6 +131,12 @@
         `;
         document.getElementById("result").style.display = 'block';
       }, 1000);
+    }
+
+    function logout() {
+      localStorage.removeItem("PredixUserID");
+      localStorage.removeItem("PredixGame");
+      window.location.href = "login.html";  // Assurez-vous d'avoir une page de connexion
     }
   </script>
 </body>
