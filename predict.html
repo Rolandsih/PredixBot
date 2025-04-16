@@ -79,12 +79,18 @@
     </select>
   </div>
 
-  <div class="block">
-    <button onclick="startPrediction()">Démarrer la prédiction</button>
+  <!-- Section des informations avant la prédiction -->
+  <div id="prePredictionInfo" class="block" style="display:none;">
+    <div><strong>Récapitulatif des informations :</strong></div>
+    <div>Jeu sélectionné : <span id="gameInfo"></span></div>
+    <div>Nom du joueur : <span id="userNameInfo"></span></div>
+    <div>Heure actuelle : <span id="currentTimeInfo"></span></div>
+    <div>Attention : La prédiction est basée sur des données aléatoires et peut ne pas être fiable à 100%.</div>
+    <button onclick="confirmPrediction()">Confirmer et démarrer la prédiction</button>
   </div>
 
   <div class="block">
-    <button onclick="logout()">Déconnexion</button>
+    <button onclick="startPrediction()">Démarrer la prédiction</button>
   </div>
 
   <div id="loader">Chargement...</div>
@@ -109,14 +115,42 @@
 
     function startPrediction() {
       const id = localStorage.getItem("PredixUserID");
-      const password = prompt("Entrez votre mot de passe pour récupérer les informations de prédiction");
+
+      // Vérifier si l'ID est valide et récupérer les informations depuis le serveur
+      fetch('http://localhost:3000/getUserData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id })
+      })
+      .then(response => response.json())
+      .then(data => {
+        const { signal, heure } = data;
+        const reliability = Math.floor(Math.random() * (97 - 25 + 1)) + 25;
+        const currentTime = new Date();
+
+        // Afficher les informations avant la prédiction
+        document.getElementById("prePredictionInfo").style.display = "block";
+        document.getElementById("gameInfo").innerText = document.getElementById("gameSelect").value;
+        document.getElementById("userNameInfo").innerText = getUserName(id);
+        document.getElementById("currentTimeInfo").innerText = currentTime.toLocaleTimeString();
+      })
+      .catch(error => {
+        alert('Erreur lors de la récupération des données');
+        console.error(error);
+      });
+    }
+
+    function confirmPrediction() {
+      const id = localStorage.getItem("PredixUserID");
 
       fetch('http://localhost:3000/getUserData', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ id, password })
+        body: JSON.stringify({ id })
       })
       .then(response => response.json())
       .then(data => {
@@ -149,6 +183,7 @@
             <div class="bar"><div class="bar-inner" style="width:${reliability}%">${reliability}%</div></div>
           `;
           document.getElementById("result").style.display = 'block';
+          document.getElementById("prePredictionInfo").style.display = 'none'; // Cacher les infos avant la prédiction
         }, 1000);
       })
       .catch(error => {
@@ -163,11 +198,6 @@
 
     function getUserGame(userID) {
       return userID === "Roland" ? "Aviator" : "Lucky Jet";
-    }
-
-    function logout() {
-      localStorage.removeItem("PredixUserID");
-      window.location.href = "login.html"; // Redirection vers la page de connexion
     }
   </script>
 </body>
