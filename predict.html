@@ -72,7 +72,7 @@
 
   <div class="block">
     <label for="gameSelect">Jeu :</label>
-    <select id="gameSelect" disabled> <!-- Le select est désactivé car le jeu est choisi automatiquement -->
+    <select id="gameSelect" disabled>
       <option>Aviator</option>
       <option>Lucky Jet</option>
       <option>Mines</option>
@@ -84,7 +84,7 @@
   </div>
 
   <div class="block">
-    <button onclick="logout()">Déconnexion</button> <!-- Bouton de déconnexion -->
+    <button onclick="logout()">Déconnexion</button>
   </div>
 
   <div id="loader">Chargement...</div>
@@ -93,10 +93,10 @@
   <script>
     function initPage() {
       const userID = localStorage.getItem("PredixUserID") || "Inconnu";
-      const userName = getUserName(userID); // Récupère le nom du joueur basé sur son ID
+      const userName = getUserName(userID);
       document.getElementById("userIdDisplay").innerText = `ID: ${userID}`;
       document.getElementById("userNameDisplay").innerText = `Nom: ${userName}`;
-      document.getElementById("gameSelect").value = getUserGame(userID); // Définit automatiquement le jeu du joueur
+      document.getElementById("gameSelect").value = getUserGame(userID);
       updateTime();
       setInterval(updateTime, 1000);
     }
@@ -108,45 +108,57 @@
     }
 
     function startPrediction() {
-      const signal = (Math.random() * 398 + 1.00).toFixed(2);
-      const reliability = Math.floor(Math.random() * (97 - 25 + 1)) + 25;
-      const heure = new Date().toLocaleTimeString();
-      const date = new Date().toLocaleDateString();
-      const jeu = document.getElementById("gameSelect").value;
+      const id = localStorage.getItem("PredixUserID");
+      const password = prompt("Entrez votre mot de passe pour récupérer les informations de prédiction");
 
-      document.getElementById("loader").style.display = 'block';
-      document.getElementById("result").style.display = 'none';
+      fetch('http://localhost:3000/getUserData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id, password })
+      })
+      .then(response => response.json())
+      .then(data => {
+        const { signal, heure } = data;
+        const reliability = Math.floor(Math.random() * (97 - 25 + 1)) + 25;
+        const currentTime = new Date().toLocaleTimeString();
+        const currentDate = new Date().toLocaleDateString();
 
-      setTimeout(() => {
-        document.getElementById("loader").style.display = 'none';
-        document.getElementById("result").innerHTML = `
-          <div>ID: ${localStorage.getItem("PredixUserID")}</div>
-          <div>Signal : ${signal}×</div>
-          <div>Prédiction pour : ${heure}</div>
-          <div>Jeu : ${jeu}</div>
-          <div>Date : ${date}</div>
-          <div>Fiabilité : ${reliability}%</div>
-          <div class="bar"><div class="bar-inner" style="width:${reliability}%">${reliability}%</div></div>
-        `;
-        document.getElementById("result").style.display = 'block';
-      }, 1000);
+        document.getElementById("loader").style.display = 'block';
+        document.getElementById("result").style.display = 'none';
+
+        setTimeout(() => {
+          document.getElementById("loader").style.display = 'none';
+          document.getElementById("result").innerHTML = `
+            <div>ID: ${id}</div>
+            <div>Signal : ${signal}</div>
+            <div>Prédiction pour : ${currentTime}</div>
+            <div>Jeu : ${document.getElementById("gameSelect").value}</div>
+            <div>Date : ${currentDate}</div>
+            <div>Fiabilité : ${reliability}%</div>
+            <div class="bar"><div class="bar-inner" style="width:${reliability}%">${reliability}%</div></div>
+          `;
+          document.getElementById("result").style.display = 'block';
+        }, 1000);
+      })
+      .catch(error => {
+        alert('Erreur lors de la récupération des données');
+        console.error(error);
+      });
     }
 
     function getUserName(userID) {
-      // Cette fonction simule la récupération du nom du joueur depuis le fichier users.txt
-      // Remplacer cette simulation par la logique réelle d'extraction des données
-      return userID === "Roland" ? "Roland" : "Joueur Inconnu"; // Exemple d'association ID-Nom
+      return userID === "Roland" ? "Roland" : "Joueur Inconnu";
     }
 
     function getUserGame(userID) {
-      // Cette fonction simule la récupération du jeu du joueur depuis le fichier users.txt
-      // Remplacer cette simulation par la logique réelle d'extraction des données
-      return userID === "Roland" ? "Aviator" : "Lucky Jet"; // Exemple d'association ID-Jeu
+      return userID === "Roland" ? "Aviator" : "Lucky Jet";
     }
 
     function logout() {
-      localStorage.removeItem("PredixUserID"); // Supprimer l'ID pour simuler la déconnexion
-      window.location.href = "login.html"; // Redirection vers la page de connexion
+      localStorage.removeItem("PredixUserID");
+      window.location.href = "login.html";
     }
   </script>
 </body>
