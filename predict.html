@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PredixBot - Prédiction</title>
+  <style>
+    body {
+      background-color: #0e0e0e;
+      color: #00ff99;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .block {
+      margin: 10px 0;
+      text-align: center;
+    }
+
+    select, button {
+      background-color: #1f1f1f;
+      color: #00ff99;
+      border: none;
+      padding: 10px;
+      margin: 5px;
+      border-radius: 5px;
+      font-family: inherit;
+    }
+
+    #result {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #1c1c1c;
+      border-radius: 8px;
+      border: 1px dashed #00ff99;
+      display: none;
+    }
+
+    #loader {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .bar {
+      height: 20px;
+      background: linear-gradient(to right, green, orange, red);
+      width: 100%;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .bar-inner {
+      height: 100%;
+      background-color: lime;
+      text-align: right;
+      padding-right: 10px;
+      color: black;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body onload="initPage()">
+  <div class="block" id="userIdDisplay"></div>
+  <div class="block" id="timeDisplay"></div>
+  <div class="block" id="countryDisplay">Pays : Côte d'Ivoire</div>
+
+  <div class="block">
+    <label for="gameSelect">Jeu :</label>
+    <select id="gameSelect">
+      <option>Aviator</option>
+      <option>Lucky Jet</option>
+      <option>Mines</option>
+    </select>
+  </div>
+
+  <div class="block">
+    <button onclick="startPrediction()">Démarrer la prédiction</button>
+  </div>
+
+  <div id="loader">Chargement...</div>
+  <div id="result"></div>
+
+  <script>
+    function initPage() {
+      const id = localStorage.getItem("PredixUserID") || "Inconnu";
+      document.getElementById("userIdDisplay").innerText = `ID: ${id}`;
+      updateTime();
+      setInterval(updateTime, 1000);
+    }
+
+    function updateTime() {
+      const now = new Date();
+      const time = now.toLocaleTimeString();
+      document.getElementById("timeDisplay").innerText = `Heure actuelle : ${time}`;
+    }
+
+    function startPrediction() {
+      const signal = (Math.random() * 398 + 1.00).toFixed(2);
+      const reliability = Math.floor(Math.random() * (97 - 25 + 1)) + 25;
+      const heure = new Date().toLocaleTimeString();
+      const date = new Date().toLocaleDateString();
+      const jeu = document.getElementById("gameSelect").value;
+
+      document.getElementById("loader").style.display = 'block';
+      document.getElementById("result").style.display = 'none';
+
+      setTimeout(() => {
+        document.getElementById("loader").style.display = 'none';
+        document.getElementById("result").innerHTML = `
+          <div>ID: ${localStorage.getItem("PredixUserID")}</div>
+          <div>Signal : ${signal}×</div>
+          <div>Prédiction pour : ${heure}</div>
+          <div>Jeu : ${jeu}</div>
+          <div>Date : ${date}</div>
+          <div>Fiabilité : ${reliability}%</div>
+          <div class="bar"><div class="bar-inner" style="width:${reliability}%">${reliability}%</div></div>
+        `;
+        document.getElementById("result").style.display = 'block';
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
