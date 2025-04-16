@@ -122,7 +122,16 @@
       .then(data => {
         const { signal, heure } = data;
         const reliability = Math.floor(Math.random() * (97 - 25 + 1)) + 25;
-        const currentTime = new Date().toLocaleTimeString();
+        const currentTime = new Date();
+        
+        // Générer un délai aléatoire entre 6, 8 et 10 minutes
+        const delayMinutes = [6, 8, 10];
+        const randomDelay = delayMinutes[Math.floor(Math.random() * delayMinutes.length)];
+        
+        // Calculer l'heure de la prédiction
+        currentTime.setMinutes(currentTime.getMinutes() + randomDelay);
+
+        const predictionTime = currentTime.toLocaleTimeString();
         const currentDate = new Date().toLocaleDateString();
 
         document.getElementById("loader").style.display = 'block';
@@ -133,7 +142,7 @@
           document.getElementById("result").innerHTML = `
             <div>ID: ${id}</div>
             <div>Signal : ${signal}</div>
-            <div>Prédiction pour : ${currentTime}</div>
+            <div>Prédiction pour : ${predictionTime}</div>
             <div>Jeu : ${document.getElementById("gameSelect").value}</div>
             <div>Date : ${currentDate}</div>
             <div>Fiabilité : ${reliability}%</div>
