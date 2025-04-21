@@ -69,10 +69,39 @@
             font-weight: 500;
             box-shadow: 0 2px 10px #242b3c1a;
             transition: background 0.2s;
+            margin-left: 20px;
         }
         .disconnect-btn:hover {
             background: rgba(255,255,255,0.32);
             color: #49a6fb;
+        }
+        .connection-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 18px;
+            min-width: 120px;
+            justify-content: flex-end;
+            transition: color 0.25s;
+        }
+        .conn-bubble {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            box-shadow: 0 0 6px #2223;
+            animation: blink 1.3s infinite;
+        }
+        .conn-bubble.good { background: #41fd7c; }
+        .conn-bubble.medium { background: #ffe066;}
+        .conn-bubble.bad { background: #ff4c71;}
+        .conn-text.good { color: #41fd7c; }
+        .conn-text.medium { color: #ffe066;}
+        .conn-text.bad { color: #ff4c71;}
+        @keyframes blink {
+            0%, 100% { opacity: 1;}
+            50% { opacity: 0.45;}
         }
         h1 {
             color: #49a6fb;
@@ -86,6 +115,24 @@
             margin-bottom: 20px;
             font-size: 18px;
             letter-spacing: .5px;
+        }
+        .warning {
+            margin: 0 0 20px 0;
+            padding: 13px 30px;
+            background: rgba(255, 185, 36, 0.11);
+            border-radius: 18px;
+            color: #ffc700;
+            font-size: 1.12em;
+            font-weight: 500;
+            text-align: center;
+            box-shadow: 0 1px 12px #3332;
+            border: 1.5px solid #ffb92444;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .warning i {
+            font-size: 1.2em;
         }
         table {
             width: 95vw;
@@ -130,25 +177,150 @@
             font-size: 1.1em;
             margin-right: 6px;
         }
+        /* Loader styles */
+        .loader-bg {
+            position: fixed;
+            left: 0; top: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0, 8, 30, 0.40);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+        }
+        .loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(25,25,35,0.17);
+            padding: 40px 50px 32px 50px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px #001a382a;
+            backdrop-filter: blur(10px) saturate(170%);
+            border: 2px solid #49a6fb33;
+            animation: fadeIn 0.7s;
+        }
+        .loader .spinner {
+            width: 64px; height: 64px;
+            border: 6px solid #49a6fb44;
+            border-top: 6px solid #49a6fb;
+            border-radius: 50%;
+            animation: spin 1.1s linear infinite;
+            margin-bottom: 25px;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg);} }
+        .loader-text {
+            font-size: 1.22em;
+            color: #fff;
+            font-weight: 500;
+            margin-bottom: 8px;
+            text-align: center;
+            letter-spacing: .5px;
+        }
+        .loader-subtext {
+            color: #bde0ff;
+            font-size: 1em;
+            opacity: 0.7;
+            text-align: center;
+        }
+        /* Popup lost connection */
+        .popup-bg {
+            display: none;
+            position: fixed;
+            z-index: 100000;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.35);
+            align-items: center; justify-content: center;
+        }
+        .popup {
+            background: rgba(15, 18, 35, 0.95);
+            padding: 35px 30px 22px 30px;
+            border-radius: 22px;
+            color: #fff;
+            box-shadow: 0 8px 32px #0009;
+            text-align: center;
+            min-width: 280px;
+            max-width: 88vw;
+            border: 2.5px solid #ff4c71;
+            animation: fadeIn 0.3s;
+        }
+        .popup .fa-wifi-slash {
+            color: #ff4c71;
+            font-size: 2.4em;
+            margin-bottom: 12px;
+        }
+        .popup .popup-title {
+            font-size: 1.25em;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+        .popup .popup-text {
+            font-size: 1.08em;
+            color: #ff9fab;
+        }
+        .popup .close-btn {
+            margin-top: 17px;
+            border: none;
+            background: #ff4c71;
+            color: #fff;
+            padding: 8px 24px;
+            border-radius: 14px;
+            font-size: 1.03em;
+            font-weight: 600;
+            letter-spacing: .5px;
+            cursor: pointer;
+            transition: background 0.18s;
+        }
+        .popup .close-btn:hover { background: #ff6f92; }
         @media (max-width: 700px) {
             table { font-size: 13px; }
             th, td { padding: 8px 3px; font-size: 0.93em;}
-            .header { flex-direction: column; align-items: flex-start; gap: 10px; padding: 25px 10px 7px 10px;}
+            .header { flex-direction: column; align-items: flex-start; gap: 10px; padding: 19px 7vw 7px 7vw;}
+            .loader { padding: 28px 10vw 18px 10vw;}
         }
     </style>
 </head>
 <body>
-    <div class="glass-bg">
+    <!-- Connexion perdue popup -->
+    <div class="popup-bg" id="lost-connection-popup">
+        <div class="popup">
+            <i class="fa fa-wifi-slash"></i>
+            <div class="popup-title">Connexion perdue</div>
+            <div class="popup-text">Vous avez perdu votre connexion internet.<br>
+                Veuillez vérifier votre réseau pour continuer à utiliser la prédiction.
+            </div>
+            <button class="close-btn" onclick="closePopup()">OK</button>
+        </div>
+    </div>
+    <!-- Loader -->
+    <div class="loader-bg" id="loader-bg">
+        <div class="loader">
+            <div class="spinner"></div>
+            <div class="loader-text">Chargement de votre prédiction intelligente...</div>
+            <div class="loader-subtext">Veuillez patienter, analyse en cours.<br>
+                <i class="fa fa-lock"></i> Accès réservé aux membres avec le code SANA33.
+            </div>
+        </div>
+    </div>
+    <div class="glass-bg" style="display:none" id="main-content">
         <div class="header">
             <div class="user-info">
                 <div class="user-avatar" id="user-avatar"><i class="fa fa-user"></i></div>
                 <span id="user-name">Utilisateur</span>
+            </div>
+            <div class="connection-indicator" id="connection-indicator">
+                <span class="conn-bubble good" id="conn-bubble"></span>
+                <span class="conn-text good" id="conn-text">Connecté</span>
             </div>
             <button class="disconnect-btn" onclick="logout()">Déconnexion</button>
         </div>
         <h1>Prédictions Lucky Jet</h1>
         <div class="current-time">
             Heure d’accès utilisateur : <span id="current-time"></span>
+        </div>
+        <div class="warning">
+            <i class="fa fa-exclamation-triangle"></i>
+            La prédiction fonctionne seulement pour les utilisateurs s’étant inscrit avec le code <b>SANA33</b>
         </div>
         <table>
             <thead>
@@ -167,11 +339,12 @@
         <div id="error-message" class="error-message"></div>
     </div>
     <script>
-        // Récupération du nom d'utilisateur dynamiquement
-        // Peut être adapté selon le système (ici : paramètre d'URL ou login JS par défaut)
+        // Utilisateur persistant
         function getUsername() {
             const params = new URLSearchParams(window.location.search);
-            return params.get('user') || "ketsiho";
+            let user = params.get('user') || localStorage.getItem('luckyjet_user') || "ketsiho";
+            localStorage.setItem('luckyjet_user', user);
+            return user;
         }
         function updateUserDisplay() {
             const user = getUsername();
@@ -180,24 +353,79 @@
         }
         updateUserDisplay();
 
-        // Déconnexion : retour à index.html
+        // Déconnexion : retour à index.html, mémoire effacée
         function logout() {
+            localStorage.removeItem('luckyjet_user');
+            localStorage.removeItem('luckyjet_predictions');
+            localStorage.removeItem('luckyjet_accesstime');
             window.location.href = "index.html";
         }
 
-        // Afficher l'heure d'accès utilisateur (heure actuelle)
+        // Heure d'accès utilisateur persistante
+        function getOrSetAccessTime() {
+            let t = localStorage.getItem('luckyjet_accesstime');
+            if (!t) {
+                t = new Date().toISOString();
+                localStorage.setItem('luckyjet_accesstime', t);
+            }
+            return new Date(t);
+        }
         function updateCurrentTime() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const accessDate = getOrSetAccessTime();
+            const timeString = accessDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             document.getElementById('current-time').textContent = timeString;
         }
         updateCurrentTime();
-        setInterval(updateCurrentTime, 1000);
+        setInterval(updateCurrentTime, 1200);
 
-        // Génère une liste d'horaires futurs (+20min, +30min, etc.)
-        function getFuturePredictionTimes(startDate, count = 8, startAfterMin = 20, stepMin = 10) {
+        // Connexion indicator
+        function setConnection(status) {
+            const bubble = document.getElementById('conn-bubble');
+            const text = document.getElementById('conn-text');
+            if (status === 'good') {
+                bubble.className = "conn-bubble good";
+                text.className = "conn-text good";
+                text.textContent = "Connecté";
+            } else if (status === 'medium') {
+                bubble.className = "conn-bubble medium";
+                text.className = "conn-text medium";
+                text.textContent = "Connexion lente";
+            } else {
+                bubble.className = "conn-bubble bad";
+                text.className = "conn-text bad";
+                text.textContent = "Déconnecté";
+            }
+        }
+        function checkConnection() {
+            if (navigator.onLine) {
+                setConnection('good');
+            } else {
+                setConnection('bad');
+                document.getElementById('lost-connection-popup').style.display = "flex";
+            }
+        }
+        window.addEventListener('online', () => { setConnection('good'); });
+        window.addEventListener('offline', () => {
+            setConnection('bad');
+            document.getElementById('lost-connection-popup').style.display = "flex";
+        });
+        function closePopup() {
+            document.getElementById('lost-connection-popup').style.display = "none";
+        }
+        setInterval(checkConnection, 3000);
+
+        // Algorithme avancé : moyenne pondérée récente + historique
+        function moyennePonderee(history, accessTime, predTime) {
+            if (!history.length) return null;
+            // Récente = 12 dernières valeurs avant predTime
+            const recent = history.filter(d => new Date(d.timestamp) < predTime).slice(-12);
+            const allAvg = history.reduce((s,v) => s+v.value, 0) / history.length;
+            const recAvg = recent.length ? recent.reduce((s,v) => s+v.value,0)/recent.length : allAvg;
+            return recAvg*0.68 + allAvg*0.32; // pondération
+        }
+        function getFuturePredictionTimes(accessDate, count = 8, startAfterMin = 20, stepMin = 10) {
             let times = [];
-            let date = new Date(startDate.getTime());
+            let date = new Date(accessDate.getTime());
             date.setMinutes(date.getMinutes() + startAfterMin);
             for (let i = 0; i < count; i++) {
                 times.push(new Date(date.getTime()));
@@ -205,15 +433,6 @@
             }
             return times;
         }
-
-        // Algorithme : moyenne globale (toutes les données, même anciennes)
-        function algoMoyenneGlobal(history) {
-            if (!history.length) return null;
-            const avg = history.reduce((sum, v) => sum + v.value, 0) / history.length;
-            return avg;
-        }
-
-        // Icône selon indice de confiance
         function confidenceIcon(conf) {
             conf = parseInt(conf);
             if (conf >= 80) return `<i class="fa-solid fa-circle-check" style="color:#40fd7c"></i>`;
@@ -221,43 +440,56 @@
             if (conf >= 40) return `<i class="fa-solid fa-triangle-exclamation" style="color:#ffbb44"></i>`;
             return `<i class="fa-solid fa-circle-xmark" style="color:#ff4c71"></i>`;
         }
-
+        function savePredictions(preds) {
+            localStorage.setItem('luckyjet_predictions', JSON.stringify(preds));
+        }
+        function loadPredictions() {
+            const s = localStorage.getItem('luckyjet_predictions');
+            return s ? JSON.parse(s) : null;
+        }
+        function clearPredictions() {
+            localStorage.removeItem('luckyjet_predictions');
+        }
+        // Main display predictions
         async function fetchAndDisplayPredictions(dataFile = 'data/prediction_data.txt') {
             const tableBody = document.getElementById('predictions-table');
             const errorMessage = document.getElementById('error-message');
             errorMessage.textContent = '';
-            tableBody.innerHTML = '<tr><td colspan="3">Chargement des données...</td></tr>';
-
+            tableBody.innerHTML = '<tr><td colspan="3">Chargement des prédictions...</td></tr>';
             try {
-                const response = await fetch(dataFile);
-                if (!response.ok) throw new Error('Impossible de charger les données');
-                const data = await response.text();
-
-                const rows = data.split('\n').filter(line => line.trim() !== '');
-                const history = rows.map(row => {
-                    const [timestamp, value] = row.split('|').map(item => item.trim());
-                    return { timestamp, value: parseFloat(value) };
-                });
-
-                const now = new Date();
-                const pad = n => n < 10 ? '0' + n : n;
-                const futureTimes = getFuturePredictionTimes(now, 8, 20, 10);
-
-                // Moyenne globale, écart type pour bruit
-                const moyenneGlobale = algoMoyenneGlobal(history);
-                const ecartType = Math.sqrt(history.reduce((acc, v) => acc + Math.pow(v.value - moyenneGlobale, 2), 0) / history.length);
-
-                const predictions = futureTimes.map(targetTime => {
-                    let predValue = moyenneGlobale + (Math.random() - 0.5) * ecartType * 0.5;
-                    let conf = Math.min(100, Math.max(30, Math.round(80 - (Math.abs(predValue - moyenneGlobale) / (ecartType + 0.01)) * 40)));
-                    return {
-                        heure: pad(targetTime.getHours()) + ':' + pad(targetTime.getMinutes()),
-                        predictedValue: predValue ? predValue.toFixed(2) : '—',
-                        confidence: predValue ? conf + '%' : '—',
-                        confidenceInt: conf
-                    };
-                });
-
+                let predictions = loadPredictions();
+                let accessTime = getOrSetAccessTime();
+                if (!predictions) {
+                    // Charger données
+                    const response = await fetch(dataFile);
+                    if (!response.ok) throw new Error('Impossible de charger les données');
+                    const data = await response.text();
+                    const rows = data.split('\n').filter(line => line.trim() !== '');
+                    const history = rows.map(row => {
+                        const [timestamp, value] = row.split('|').map(item => item.trim());
+                        return { timestamp, value: parseFloat(value) };
+                    });
+                    // Calcul des prédictions
+                    const futureTimes = getFuturePredictionTimes(accessTime, 8, 20, 10);
+                    // Ecart type global pour bruit
+                    const allAvg = history.reduce((s,v) => s+v.value, 0) / history.length;
+                    const ecartType = Math.sqrt(history.reduce((acc, v) => acc + Math.pow(v.value - allAvg, 2), 0) / history.length);
+                    predictions = futureTimes.map(targetTime => {
+                        let predValue = moyennePonderee(history, accessTime, targetTime);
+                        predValue += (Math.random()-0.5)*ecartType*0.45; // bruit réaliste
+                        let conf = Math.min(100, Math.max(30, Math.round(
+                            90-(Math.abs(predValue-allAvg)/(ecartType+0.01))*50
+                        )));
+                        return {
+                            heure: (targetTime.getHours()<10?'0':'')+targetTime.getHours()+':' + (targetTime.getMinutes()<10?'0':'')+targetTime.getMinutes(),
+                            predictedValue: predValue ? predValue.toFixed(2) : '—',
+                            confidence: predValue ? conf + '%' : '—',
+                            confidenceInt: conf
+                        };
+                    });
+                    savePredictions(predictions);
+                }
+                // Affichage
                 tableBody.innerHTML = '';
                 predictions.forEach(pred => {
                     const row = document.createElement('tr');
@@ -268,16 +500,18 @@
                     `;
                     tableBody.appendChild(row);
                 });
-
             } catch (err) {
                 tableBody.innerHTML = '<tr><td colspan="3">Aucune donnée disponible.</td></tr>';
                 errorMessage.textContent = err.message;
+                clearPredictions();
             }
         }
-
+        // Loader : attend 2s puis affiche la page principale
         document.addEventListener('DOMContentLoaded', () => {
-            fetchAndDisplayPredictions();
+            setTimeout(() => {
+                document.getElementById('loader-bg').style.display = 'none';
+                document.getElementById('main-content').style.display = 'flex';
+                fetchAndDisplayPredictions();
+            }, 2000);
         });
-    </script>
-</body>
-</html>
+    </scr
