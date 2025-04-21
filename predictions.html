@@ -5,62 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prédictions - Lucky Jet Predictor</title>
     <style>
-        /* Mode sombre et Glassmorphism */
-        body {
-            font-family: Arial, sans-serif;
+        html, body {
+            height: 100%;
             margin: 0;
             padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            min-height: 100vh;
             background: url('images/lucky-jet-app-screenshot.png') no-repeat center center fixed;
             background-size: cover;
             color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+        .glass-bg {
+            min-height: 100vh;
+            width: 100vw;
+            padding: 0;
+            margin: 0;
+            background: rgba(255,255,255,0.10);
+            backdrop-filter: blur(20px);
+            border-radius: 0;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
-        .glass {
-            backdrop-filter: blur(15px);
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
-            padding: 30px;
-            width: 90%;
-            max-width: 800px;
-            text-align: center;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
         }
         h1 {
-            font-size: 24px;
-            color: #3498db;
+            color: #49a6fb;
+            margin-top: 30px;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        .current-time {
+            color: #cce6ff;
             margin-bottom: 20px;
+            font-size: 18px;
         }
         table {
-            width: 100%;
+            width: 90vw;
+            max-width: 900px;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin: 0 auto 30px auto;
+            background: rgba(255,255,255,0.09);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
         }
         th, td {
-            padding: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 10px;
             text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.18);
         }
         th {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: #f4f4f4;
+            background: rgba(255,255,255,0.22);
+            color: #49a6fb;
+            font-size: 18px;
         }
         td {
-            background-color: rgba(255, 255, 255, 0.1);
+            background: rgba(255,255,255,0.09);
+            color: #fff;
+            font-size: 16px;
+        }
+        tr:last-child td {
+            border-bottom: none;
         }
         .error-message {
             color: #e74c3c;
-            margin-top: 20px;
+            font-size: 17px;
+            text-align: center;
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
-    <div class="glass">
-        <h1>Prédictions - Lucky Jet</h1>
+    <div class="glass-bg">
+        <h1>Prédictions Lucky Jet</h1>
+        <div class="current-time">
+            Heure d’accès utilisateur : <span id="current-time"></span>
+        </div>
         <table>
             <thead>
                 <tr>
@@ -70,60 +96,99 @@
                 </tr>
             </thead>
             <tbody id="predictions-table">
-                <tr><td colspan="3">Chargement des données...</td></tr>
+                <tr>
+                    <td colspan="3">Chargement des données...</td>
+                </tr>
             </tbody>
         </table>
-        <p id="error-message" class="error-message"></p>
+        <div id="error-message" class="error-message"></div>
     </div>
-
     <script>
-        // Lien vers l'API pour récupérer les données
-        const apiUrl = 'https://crash-gateway-cc-cr.gamedev-tech.cc/history?id_n=1play_luckyjet&id_i=1';
+        // Afficher l'heure d'accès utilisateur (heure actuelle)
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('fr-FR', {
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+            document.getElementById('current-time').textContent = timeString;
+        }
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 1000);
 
-        // Fonction pour charger les données et calculer les prédictions
-        async function fetchPredictions() {
+        // Fonction pour charger et afficher les prédictions à partir du fichier principal
+        async function fetchAndDisplayPredictions(dataFile = 'data/prediction_data.txt') {
             const tableBody = document.getElementById('predictions-table');
             const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = '';
+            tableBody.innerHTML = '<tr><td colspan="3">Chargement des données...</td></tr>';
 
             try {
-                // Appel à l'API
-                const response = await fetch(apiUrl);
-                const data = await response.json();
+                // Charger les données depuis le fichier principal
+                const response = await fetch(dataFile);
+                if (!response.ok) throw new Error('Impossible de charger les données');
+                const data = await response.text();
 
-                // Analyse des données pour prédictions
-                const history = data.history.slice(-20); // Derniers 20 tours
-                const predictions = history.map((item, index, arr) => {
+                // Parse des données
+                const rows = data.split('\n').filter(line => line.trim() !== '');
+                const history = rows.map(row => {
+                    const [timestamp, value] = row.split('|').map(item => item.trim());
+                    return { timestamp, value: parseFloat(value) };
+                });
+
+                // Heure utilisateur actuelle
+                const now = new Date();
+
+                // Ne garder que les prédictions dont l'heure est >= à l'heure d'accès utilisateur
+                const futurePredictions = history.filter(item => {
+                    const itemDate = new Date(item.timestamp);
+                    return itemDate >= now;
+                });
+
+                // Si pas assez de données futures, prendre les dernières entrées (pour test)
+                const predictionsToShow = (futurePredictions.length >= 20)
+                    ? futurePredictions.slice(0, 20)
+                    : history.slice(-20);
+
+                // Calcul simple pour indice de confiance (plus tard tu pourras donner tes propres règles)
+                const predictions = predictionsToShow.map((item, index, arr) => {
                     const previous = arr.slice(Math.max(0, index - 3), index + 1);
-                    const average = previous.reduce((sum, entry) => sum + entry.coefficient, 0) / previous.length;
-                    const confidence = (1 / (Math.abs(average - item.coefficient) + 1)) * 100; // Calcul simple de confiance
+                    const average = previous.reduce((sum, entry) => sum + entry.value, 0) / previous.length;
+                    const confidence = (1 / (Math.abs(average - item.value) + 0.2)) * 100;
                     return {
                         timestamp: item.timestamp,
-                        predictedCoefficient: (average + Math.random() * 0.5).toFixed(2),
-                        confidence: Math.min(confidence, 100).toFixed(2) + '%'
+                        predictedValue: item.value.toFixed(2),
+                        confidence: Math.min(confidence, 100).toFixed(0) + '%'
                     };
                 });
 
-                // Afficher les prédictions dans le tableau
+                // Afficher le tableau (heure, cote, confiance)
                 tableBody.innerHTML = '';
-                predictions.forEach(prediction => {
+                predictions.forEach(pred => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${new Date(prediction.timestamp).toLocaleTimeString()}</td>
-                        <td>${prediction.predictedCoefficient}</td>
-                        <td>${prediction.confidence}</td>
+                        <td>${new Date(pred.timestamp).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td>
+                        <td>${pred.predictedValue}</td>
+                        <td>${pred.confidence}</td>
                     `;
                     tableBody.appendChild(row);
                 });
 
-            } catch (error) {
-                // En cas d'erreur
-                tableBody.innerHTML = `<tr><td colspan="3">Aucune donnée disponible.</td></tr>`;
-                errorMessage.textContent = 'Erreur lors du chargement des prédictions. Veuillez réessayer plus tard.';
+                if (predictions.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="3">Aucune donnée à afficher.</td></tr>';
+                }
+
+            } catch (err) {
+                tableBody.innerHTML = '<tr><td colspan="3">Aucune donnée disponible.</td></tr>';
+                errorMessage.textContent = err.message;
             }
         }
 
-        // Charger les prédictions au démarrage
-        document.addEventListener('DOMContentLoaded', fetchPredictions);
+        // Charger les prédictions au chargement de la page
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAndDisplayPredictions();
+        });
+
+        // Tu pourras ajouter ici une fonction pour changer de fichier dans le dossier data/ si tu veux
     </script>
 </body>
 </html>
