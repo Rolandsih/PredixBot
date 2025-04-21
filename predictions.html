@@ -4,66 +4,118 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prédictions intelligentes - Lucky Jet Predictor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <style>
         html, body {
             height: 100%;
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
-        }
-        body {
-            min-height: 100vh;
+            font-family: 'Segoe UI', Arial, sans-serif;
             background: url('images/lucky-jet-app-screenshot.png') no-repeat center center fixed;
             background-size: cover;
             color: #f4f4f4;
-            width: 100vw;
-            height: 100vh;
+        }
+        body {
+            min-height: 100vh;
+            min-width: 100vw;
+            overflow-x: hidden;
         }
         .glass-bg {
             min-height: 100vh;
             width: 100vw;
-            padding: 0;
-            background: rgba(255,255,255,0.10);
-            backdrop-filter: blur(20px);
+            padding: 0 0 30px 0;
+            margin: 0;
+            background: rgba(255,255,255,0.13);
+            backdrop-filter: blur(22px) saturate(150%);
             display: flex;
             flex-direction: column;
             align-items: center;
         }
+        .header {
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 32px 40px 10px 40px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-weight: 500;
+            font-size: 1.25em;
+            letter-spacing: .5px;
+        }
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f8cff 0%, #49e6fb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2em;
+            color: #fff;
+            box-shadow: 0 2px 12px #242b3c4a;
+        }
+        .disconnect-btn {
+            padding: 10px 24px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 18px;
+            color: #fff;
+            font-size: 1.05em;
+            cursor: pointer;
+            font-weight: 500;
+            box-shadow: 0 2px 10px #242b3c1a;
+            transition: background 0.2s;
+        }
+        .disconnect-btn:hover {
+            background: rgba(255,255,255,0.32);
+            color: #49a6fb;
+        }
         h1 {
             color: #49a6fb;
-            margin-top: 30px;
-            margin-bottom: 10px;
+            margin-top: 10px;
+            margin-bottom: 12px;
             letter-spacing: 2px;
+            text-shadow: 0 4px 20px #001b2a65;
         }
         .current-time {
             color: #cce6ff;
             margin-bottom: 20px;
             font-size: 18px;
+            letter-spacing: .5px;
         }
         table {
-            width: 90vw;
-            max-width: 900px;
+            width: 95vw;
+            max-width: 950px;
             border-collapse: collapse;
             margin: 0 auto 30px auto;
-            background: rgba(255,255,255,0.09);
-            border-radius: 10px;
+            background: rgba(255,255,255,0.13);
+            border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 6px 30px 0 #0e1b2a30;
+            animation: fadeIn 1.2s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px);}
+            to { opacity: 1; transform: translateY(0);}
         }
         th, td {
-            padding: 12px 10px;
+            padding: 15px 10px;
             text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.18);
+            border-bottom: 1px solid rgba(255,255,255,0.13);
         }
         th {
-            background: rgba(255,255,255,0.22);
+            background: rgba(255,255,255,0.23);
             color: #49a6fb;
             font-size: 18px;
         }
         td {
             background: rgba(255,255,255,0.09);
             color: #fff;
-            font-size: 16px;
+            font-size: 17px;
         }
         tr:last-child td {
             border-bottom: none;
@@ -74,11 +126,27 @@
             text-align: center;
             margin-top: 15px;
         }
+        .confidence-icon {
+            font-size: 1.1em;
+            margin-right: 6px;
+        }
+        @media (max-width: 700px) {
+            table { font-size: 13px; }
+            th, td { padding: 8px 3px; font-size: 0.93em;}
+            .header { flex-direction: column; align-items: flex-start; gap: 10px; padding: 25px 10px 7px 10px;}
+        }
     </style>
 </head>
 <body>
     <div class="glass-bg">
-        <h1>Prédictions Intelligentes Lucky Jet</h1>
+        <div class="header">
+            <div class="user-info">
+                <div class="user-avatar" id="user-avatar"><i class="fa fa-user"></i></div>
+                <span id="user-name">Utilisateur</span>
+            </div>
+            <button class="disconnect-btn" onclick="logout()">Déconnexion</button>
+        </div>
+        <h1>Prédictions Lucky Jet</h1>
         <div class="current-time">
             Heure d’accès utilisateur : <span id="current-time"></span>
         </div>
@@ -99,7 +167,26 @@
         <div id="error-message" class="error-message"></div>
     </div>
     <script>
-        function pad(n) { return n < 10 ? '0' + n : n; }
+        // Récupération du nom d'utilisateur dynamiquement
+        // --- À adapter selon ton système ! ---
+        // Exemple : récupération via URL paramètre ?user=Nom
+        function getUsername() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('user') || "Utilisateur";
+        }
+        // Affiche la première lettre ou une icône dans l'avatar
+        function updateUserDisplay() {
+            const user = getUsername();
+            document.getElementById('user-name').textContent = user;
+            document.getElementById('user-avatar').textContent = user[0].toUpperCase();
+        }
+        updateUserDisplay();
+
+        // Déconnexion (factice ici)
+        function logout() {
+            alert("Déconnexion effectuée !");
+            window.location.href = "login.html";
+        }
 
         // Afficher l'heure d'accès utilisateur (heure actuelle)
         function updateCurrentTime() {
@@ -129,6 +216,15 @@
             return avg;
         }
 
+        // Affiche une icône en fonction de l'indice de confiance
+        function confidenceIcon(conf) {
+            conf = parseInt(conf);
+            if (conf >= 80) return `<i class="fa-solid fa-circle-check" style="color:#40fd7c"></i>`;
+            if (conf >= 60) return `<i class="fa-solid fa-circle-half-stroke" style="color:#ffe066"></i>`;
+            if (conf >= 40) return `<i class="fa-solid fa-triangle-exclamation" style="color:#ffbb44"></i>`;
+            return `<i class="fa-solid fa-circle-xmark" style="color:#ff4c71"></i>`;
+        }
+
         // Charge la base de données et génère les prédictions
         async function fetchAndDisplayPredictions(dataFile = 'data/prediction_data.txt') {
             const tableBody = document.getElementById('predictions-table');
@@ -137,48 +233,42 @@
             tableBody.innerHTML = '<tr><td colspan="3">Chargement des données...</td></tr>';
 
             try {
-                // Charger les données historiques
                 const response = await fetch(dataFile);
                 if (!response.ok) throw new Error('Impossible de charger les données');
                 const data = await response.text();
 
-                // Parse des données
                 const rows = data.split('\n').filter(line => line.trim() !== '');
                 const history = rows.map(row => {
                     const [timestamp, value] = row.split('|').map(item => item.trim());
                     return { timestamp, value: parseFloat(value) };
                 });
 
-                // Heure utilisateur actuelle
                 const now = new Date();
-
-                // Générer les horaires de prédiction (ex : +20min, +30min…)
+                const pad = n => n < 10 ? '0' + n : n;
                 const futureTimes = getFuturePredictionTimes(now, 8, 20, 10);
 
-                // Utiliser toutes les données pour chaque prédiction (tu peux remplacer par un algo plus avancé)
+                // Moyenne globale, écart type pour bruit
                 const moyenneGlobale = algoMoyenneGlobal(history);
                 const ecartType = Math.sqrt(history.reduce((acc, v) => acc + Math.pow(v.value - moyenneGlobale, 2), 0) / history.length);
 
                 const predictions = futureTimes.map(targetTime => {
-                    // Ici, la prédiction est la moyenne globale
-                    // Pour donner un peu de "variété", on ajoute un petit bruit aléatoire dans l'écart-type
                     let predValue = moyenneGlobale + (Math.random() - 0.5) * ecartType * 0.5;
                     let conf = Math.min(100, Math.max(30, Math.round(80 - (Math.abs(predValue - moyenneGlobale) / (ecartType + 0.01)) * 40)));
                     return {
                         heure: pad(targetTime.getHours()) + ':' + pad(targetTime.getMinutes()),
                         predictedValue: predValue ? predValue.toFixed(2) : '—',
-                        confidence: predValue ? conf + '%' : '—'
+                        confidence: predValue ? conf + '%' : '—',
+                        confidenceInt: conf
                     };
                 });
 
-                // Affichage du tableau
                 tableBody.innerHTML = '';
                 predictions.forEach(pred => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${pred.heure}</td>
                         <td>${pred.predictedValue}</td>
-                        <td>${pred.confidence}</td>
+                        <td>${confidenceIcon(pred.confidenceInt)} ${pred.confidence}</td>
                     `;
                     tableBody.appendChild(row);
                 });
@@ -189,7 +279,6 @@
             }
         }
 
-        // Charger les prédictions au chargement de la page
         document.addEventListener('DOMContentLoaded', () => {
             fetchAndDisplayPredictions();
         });
