@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prédictions - Lucky Jet Predictor</title>
+    <style>
+        /* Mode sombre et Glassmorphism */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: url('images/lucky-jet-app-screenshot.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .glass {
+            backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            font-size: 24px;
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+        th {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #f4f4f4;
+        }
+        td {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .error-message {
+            color: #e74c3c;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="glass">
+        <h1>Prédictions - Lucky Jet</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Heure</th>
+                    <th>Cote Prédite</th>
+                    <th>Indice de Confiance</th>
+                </tr>
+            </thead>
+            <tbody id="predictions-table">
+                <tr><td colspan="3">Chargement des données...</td></tr>
+            </tbody>
+        </table>
+        <p id="error-message" class="error-message"></p>
+    </div>
+
+    <script>
+        // Lien vers l'API pour récupérer les données
+        const apiUrl = 'https://crash-gateway-cc-cr.gamedev-tech.cc/history?id_n=1play_luckyjet&id_i=1';
+
+        // Fonction pour charger les données et calculer les prédictions
+        async function fetchPredictions() {
+            const tableBody = document.getElementById('predictions-table');
+            const errorMessage = document.getElementById('error-message');
+
+            try {
+                // Appel à l'API
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                // Analyse des données pour prédictions
+                const history = data.history.slice(-20); // Derniers 20 tours
+                const predictions = history.map((item, index, arr) => {
+                    const previous = arr.slice(Math.max(0, index - 3), index + 1);
+                    const average = previous.reduce((sum, entry) => sum + entry.coefficient, 0) / previous.length;
+                    const confidence = (1 / (Math.abs(average - item.coefficient) + 1)) * 100; // Calcul simple de confiance
+                    return {
+                        timestamp: item.timestamp,
+                        predictedCoefficient: (average + Math.random() * 0.5).toFixed(2),
+                        confidence: Math.min(confidence, 100).toFixed(2) + '%'
+                    };
+                });
+
+                // Afficher les prédictions dans le tableau
+                tableBody.innerHTML = '';
+                predictions.forEach(prediction => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${new Date(prediction.timestamp).toLocaleTimeString()}</td>
+                        <td>${prediction.predictedCoefficient}</td>
+                        <td>${prediction.confidence}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+            } catch (error) {
+                // En cas d'erreur
+                tableBody.innerHTML = `<tr><td colspan="3">Aucune donnée disponible.</td></tr>`;
+                errorMessage.textContent = 'Erreur lors du chargement des prédictions. Veuillez réessayer plus tard.';
+            }
+        }
+
+        // Charger les prédictions au démarrage
+        document.addEventListener('DOMContentLoaded', fetchPredictions);
+    </script>
+</body>
+</html>
