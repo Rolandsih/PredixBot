@@ -113,19 +113,25 @@
             try {
                 // Charger le fichier users.txt
                 const response = await fetch('data/users.txt');
+                if (!response.ok) throw new Error("Impossible de charger users.txt");
                 const data = await response.text();
-                // Diviser le fichier en lignes et vérifier les identifiants
-                const users = data.split('\n').map(line => line.split('|').map(field => field.trim()));
+                // Diviser le fichier en lignes et vérifier les identifiants, ignorer les commentaires
+                const users = data.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line && !line.startsWith('#'))
+                    .map(line => line.split('|').map(field => field.trim()));
 
                 // Vérification des informations
-                const isValid = users.some(user => user[0] === userId && user[2] === password);
+                const userMatch = users.find(user => user[0] === userId && user[2] === password);
 
-                if (isValid) {
+                if (userMatch) {
                     message.textContent = 'Connexion réussie ! Redirection...';
                     message.classList.add('success');
+                    // Stocke l'ID dans le localStorage pour la suite + redirection avec ?user=ID
+                    localStorage.setItem('luckyjet_user', userId);
                     setTimeout(() => {
-                        window.location.href = 'predictions.html';
-                    }, 2000);
+                        window.location.href = 'predictions.html?user=' + encodeURIComponent(userId);
+                    }, 1200);
                 } else {
                     message.textContent = 'Identifiant ou mot de passe incorrect.';
                     message.classList.add('error');
