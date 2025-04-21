@@ -1,5 +1,5 @@
 # Format : ID | Nom d'utilisateur | Mot de passe
-CIV@00@29 | JohnDoe | securePassword123
+CIV@00@29 | JohnDoe | 0102147038
 CIV@01@45 | JaneSmith | myPassword456
 CIV@02@78 | AliceBrown | alicePass789
 CIV@03@12 | BobMarley | reggaeLove
