@@ -168,13 +168,11 @@
     </div>
     <script>
         // Récupération du nom d'utilisateur dynamiquement
-        // --- À adapter selon ton système ! ---
-        // Exemple : récupération via URL paramètre ?user=Nom
+        // Peut être adapté selon le système (ici : paramètre d'URL ou login JS par défaut)
         function getUsername() {
             const params = new URLSearchParams(window.location.search);
-            return params.get('user') || "Utilisateur";
+            return params.get('user') || "ketsiho";
         }
-        // Affiche la première lettre ou une icône dans l'avatar
         function updateUserDisplay() {
             const user = getUsername();
             document.getElementById('user-name').textContent = user;
@@ -182,10 +180,9 @@
         }
         updateUserDisplay();
 
-        // Déconnexion (factice ici)
+        // Déconnexion : retour à index.html
         function logout() {
-            alert("Déconnexion effectuée !");
-            window.location.href = "login.html";
+            window.location.href = "index.html";
         }
 
         // Afficher l'heure d'accès utilisateur (heure actuelle)
@@ -197,7 +194,7 @@
         updateCurrentTime();
         setInterval(updateCurrentTime, 1000);
 
-        // Génère une liste d'horaires futurs (+20min, +30min, etc.) à partir de l'heure d'accès
+        // Génère une liste d'horaires futurs (+20min, +30min, etc.)
         function getFuturePredictionTimes(startDate, count = 8, startAfterMin = 20, stepMin = 10) {
             let times = [];
             let date = new Date(startDate.getTime());
@@ -209,14 +206,14 @@
             return times;
         }
 
-        // Algorithme simple : moyenne de toutes les valeurs de la base, peu importe la date
+        // Algorithme : moyenne globale (toutes les données, même anciennes)
         function algoMoyenneGlobal(history) {
             if (!history.length) return null;
             const avg = history.reduce((sum, v) => sum + v.value, 0) / history.length;
             return avg;
         }
 
-        // Affiche une icône en fonction de l'indice de confiance
+        // Icône selon indice de confiance
         function confidenceIcon(conf) {
             conf = parseInt(conf);
             if (conf >= 80) return `<i class="fa-solid fa-circle-check" style="color:#40fd7c"></i>`;
@@ -225,7 +222,6 @@
             return `<i class="fa-solid fa-circle-xmark" style="color:#ff4c71"></i>`;
         }
 
-        // Charge la base de données et génère les prédictions
         async function fetchAndDisplayPredictions(dataFile = 'data/prediction_data.txt') {
             const tableBody = document.getElementById('predictions-table');
             const errorMessage = document.getElementById('error-message');
