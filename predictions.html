@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prédictions intelligentes - Lucky Jet Predictor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: url('images/lucky-jet-app-screenshot.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #f4f4f4;
+        }
+        body {
+            min-height: 100vh;
+            min-width: 100vw;
+            overflow-x: hidden;
+            box-sizing: border-box;
+        }
+        .glass-bg {
+            min-height: 100vh;
+            width: 100vw;
+            background: rgba(255,255,255,0.13);
+            backdrop-filter: blur(22px) saturate(150%);
+            -webkit-backdrop-filter: blur(22px) saturate(150%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            box-sizing: border-box;
+            position: fixed;
+            top: 0; left: 0;
+            z-index: 1;
+            overflow-y: auto;
+        }
+        .header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 32px 40px 10px 40px;
+            box-sizing: border-box;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-weight: 500;
+            font-size: 1.25em;
+            letter-spacing: .5px;
+        }
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f8cff 0%, #49e6fb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2em;
+            color: #fff;
+            box-shadow: 0 2px 12px #242b3c4a;
+        }
+        .disconnect-btn {
+            padding: 10px 24px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 18px;
+            color: #fff;
+            font-size: 1.05em;
+            cursor: pointer;
+            font-weight: 500;
+            box-shadow: 0 2px 10px #242b3c1a;
+            transition: background 0.2s;
+            margin-left: 20px;
+        }
+        .disconnect-btn:hover {
+            background: rgba(255,255,255,0.32);
+            color: #49a6fb;
+        }
+        .connection-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 18px;
+            min-width: 120px;
+            justify-content: flex-end;
+            transition: color 0.25s;
+        }
+        .conn-bubble {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            box-shadow: 0 0 6px #2223;
+            animation: blink 1.3s infinite;
+        }
+        .conn-bubble.good { background: #41fd7c; }
+        .conn-bubble.medium { background: #ffe066;}
+        .conn-bubble.bad { background: #ff4c71;}
+        .conn-text.good { color: #41fd7c; }
+        .conn-text.medium { color: #ffe066;}
+        .conn-text.bad { color: #ff4c71;}
+        @keyframes blink {
+            0%, 100% { opacity: 1;}
+            50% { opacity: 0.45;}
+        }
+        h1 {
+            color: #49a6fb;
+            margin-top: 10px;
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+            text-shadow: 0 4px 20px #001b2a65;
+        }
+        .current-time {
+            color: #cce6ff;
+            margin-bottom: 20px;
+            font-size: 18px;
+            letter-spacing: .5px;
+        }
+        .warning {
+            margin: 0 0 20px 0;
+            padding: 13px 30px;
+            background: rgba(255, 185, 36, 0.11);
+            border-radius: 18px;
+            color: #ffc700;
+            font-size: 1.12em;
+            font-weight: 500;
+            text-align: center;
+            box-shadow: 0 1px 12px #3332;
+            border: 1.5px solid #ffb92444;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .warning i {
+            font-size: 1.2em;
+        }
+        .switch-btn-round {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: #fff;
+            border: none;
+            box-shadow: 0 2px 10px #242b3c2a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #49a6fb;
+            cursor: pointer;
+            position: relative;
+            left: 50%;
+            transform: translateX(-50%);
+            margin: 0 0 18px 0;
+            z-index: 10;
+            transition: background 0.15s, color 0.15s;
+        }
+        .switch-btn-round:hover {
+            background: #49a6fb;
+            color: #fff;
+        }
+        .chart-container {
+            width: 100%;
+            max-width: 950px;
+            margin: 0 auto 32px auto;
+            background: rgba(255,255,255,0.11);
+            border-radius: 17px;
+            box-shadow: 0 4px 18px #0e1b2a17;
+            padding: 20px 10px 10px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            scroll-margin-top: 90px;
+            overflow-x: auto;
+        }
+        #pred-chart {
+            width: 100% !important;
+            min-width: 320px;
+            max-width: 890px;
+            min-height: 220px;
+        }
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            display: flex;
+            justify-content: center;
+            scroll-margin-top: 90px;
+        }
+        table {
+            width: 98vw;
+            max-width: 950px;
+            border-collapse: collapse;
+            margin: 0 auto 30px auto;
+            background: rgba(255,255,255,0.13);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 6px 30px 0 #0e1b2a30;
+            animation: fadeIn 1.2s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        th, td {
+            padding: 15px 10px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.13);
+            white-space: nowrap;
+        }
+        th {
+            background: rgba(255,255,255,0.23);
+            color: #49a6fb;
+            font-size: 18px;
+        }
+        td {
+            background: rgba(255,255,255,0.09);
+            color: #fff;
+            font-size: 17px;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .error-message {
+            color: #e74c3c;
+            font-size: 17px;
+            text-align: center;
+            margin-top: 15px;
+        }
+        .confidence-icon {
+            font-size: 1.1em;
+            margin-right: 6px;
+        }
+        /* Loader styles */
+        .loader-bg {
+            position: fixed;
+            left: 0; top: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0, 8, 30, 0.40);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+        }
+        .loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(25,25,35,0.17);
+            padding: 40px 50px 32px 50px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px #001a382a;
+            backdrop-filter: blur(10px) saturate(170%);
+            border: 2px solid #49a6fb33;
+            animation: fadeIn 0.7s;
+        }
+        .loader .spinner {
+            width: 64px; height: 64px;
+            border: 6px solid #49a6fb44;
+            border-top: 6px solid #49a6fb;
+            border-radius: 50%;
+            animation: spin 1.1s linear infinite;
+            margin-bottom: 25px;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg);} }
+        .loader-text {
+            font-size: 1.22em;
+            color: #fff;
+            font-weight: 500;
+            margin-bottom: 8px;
+            text-align: center;
+            letter-spacing: .5px;
+        }
+        .loader-subtext {
+            color: #bde0ff;
+            font-size: 1em;
+            opacity: 0.7;
+            text-align: center;
+        }
+        /* Popup lost connection */
+        .popup-bg {
+            display: none;
+            position: fixed;
+            z-index: 100000;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.35);
+            align-items: center; justify-content: center;
+        }
+        .popup {
+            background: rgba(15, 18, 35, 0.95);
+            padding: 35px 30px 22px 30px;
+            border-radius: 22px;
+            color: #fff;
+            box-shadow: 0 8px 32px #0009;
+            text-align: center;
+            min-width: 280px;
+            max-width: 88vw;
+            border: 2.5px solid #ff4c71;
+            animation: fadeIn 0.3s;
+        }
+        .popup .fa-wifi-slash {
+            color: #ff4c71;
+            font-size: 2.4em;
+            margin-bottom: 12px;
+        }
+        .popup .popup-title {
+            font-size: 1.25em;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+        .popup .popup-text {
+            font-size: 1.08em;
+            color: #ff9fab;
+        }
+        .popup .close-btn {
+            margin-top: 17px;
+            border: none;
+            background: #ff4c71;
+            color: #fff;
+            padding: 8px 24px;
+            border-radius: 14px;
+            font-size: 1.03em;
+            font-weight: 600;
+            letter-spacing: .5px;
+            cursor: pointer;
+            transition: background 0.18s;
+        }
+        .popup .close-btn:hover { background: #ff6f92; }
+
+        /* --- Responsive improvements --- */
+        @media (max-width: 1100px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 24px 4vw 7px 4vw;
+            }
+            .glass-bg {
+                padding-bottom: 10px;
+            }
+        }
+        @media (max-width: 900px) {
+            h1 { font-size: 1.3em;}
+            table { max-width: 99vw; }
+            .chart-container { max-width: 99vw;}
+        }
+        @media (max-width: 700px) {
+            .header { flex-direction: column; align-items: flex-start; gap: 10px; padding: 19px 7vw 7px 7vw;}
+            .loader { padding: 28px 10vw 18px 10vw;}
+            h1 { font-size: 1.15em; }
+            .table-responsive { padding: 0 2vw; }
+            .chart-container { padding: 11px 2vw 6px 2vw;}
+        }
+        @media (max-width: 600px) {
+            .header { padding: 10px 3vw 4px 3vw; }
+            .user-avatar { width: 36px; height: 36px; font-size: 1.4em; }
+            .disconnect-btn { padding: 6px 13px; font-size: 0.9em; }
+            th, td { padding: 8px 3px; font-size: 0.93em;}
+            .chart-container { min-width: 320px; }
+        }
+        @media (max-width: 450px) {
+            h1 { font-size: 1em; }
+            .header { padding: 8px 1vw 3px 1vw; }
+            .user-info { font-size: 1em;}
+            .popup { min-width: 88vw; padding: 10vw 2vw;}
+            .chart-container { padding: 4vw 1vw;}
+        }
+    </style>
+</head>
+<body>
+    <!-- Connexion perdue popup -->
+    <div class="popup-bg" id="lost-connection-popup">
+        <div class="popup">
+            <i class="fa fa-wifi-slash"></i>
+            <div class="popup-title">Connexion perdue</div>
+            <div class="popup-text">Vous avez perdu votre connexion internet.<br>
+                Veuillez vérifier votre réseau pour continuer à utiliser la prédiction.
+            </div>
+            <button class="close-btn" onclick="closePopup()">OK</button>
+        </div>
+    </div>
+    <!-- Loader -->
+    <div class="loader-bg" id="loader-bg">
+        <div class="loader">
+            <div class="spinner"></div>
+            <div class="loader-text">Chargement de votre prédiction intelligente...</div>
+            <div class="loader-subtext">Veuillez patienter, analyse en cours.<br>
+                <i class="fa fa-lock"></i> Accès réservé aux membres avec le code SANA33.
+            </div>
+        </div>
+    </div>
+    <div class="glass-bg" style="display:none" id="main-content">
+        <div class="header">
+            <div class="user-info">
+                <div class="user-avatar" id="user-avatar"><i class="fa fa-user"></i></div>
+                <span id="user-name">Utilisateur</span>
+            </div>
+            <div class="connection-indicator" id="connection-indicator">
+                <span class="conn-bubble good" id="conn-bubble"></span>
+                <span class="conn-text good" id="conn-text">Connecté</span>
+            </div>
+            <button class="disconnect-btn" onclick="logout()">Déconnexion</button>
+        </div>
+        <h1>Prédictions Lucky Jet</h1>
+        <div class="current-time">
+            Heure d’accès utilisateur : <span id="current-time"></span>
+        </div>
+        <div class="warning">
+            <i class="fa fa-exclamation-triangle"></i>
+            La prédiction fonctionne seulement pour les utilisateurs s’étant inscrit avec le code <b>SANA33</b>
+        </div>
+        <div id="switchable-container">
+            <div class="table-responsive" id="table-zone">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Heure de Prédiction</th>
+                            <th>Cote Prédite</th>
+                            <th>Indice de Confiance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="predictions-table">
+                        <tr>
+                            <td colspan="3">Chargement des prédictions...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="switch-btn-round" id="switchBtn" title="Permuter tableau / graphique" onclick="switchStatsTable()">
+                <i id="arrowIcon" class="fa-solid fa-arrow-down"></i>
+            </button>
+            <div class="chart-container" id="chart-zone">
+                <canvas id="pred-chart"></canvas>
+            </div>
+        </div>
+        <div id="error-message" class="error-message"></div>
+    </div>
+    <script>
+        // --- Switch graphique/tableau ---
+        let statsFirst = false; // false = tableau en haut, true = graphique en haut
+
+        function switchStatsTable() {
+            const container = document.getElementById('switchable-container');
+            const tableZone = document.getElementById('table-zone');
+            const chartZone = document.getElementById('chart-zone');
+            const arrowIcon = document.getElementById('arrowIcon');
+            if (!statsFirst) {
+                container.insertBefore(chartZone, document.getElementById('switchBtn'));
+                container.insertBefore(tableZone, null);
+                arrowIcon.classList.remove("fa-arrow-down");
+                arrowIcon.classList.add("fa-arrow-up");
+                statsFirst = true;
+            } else {
+                container.insertBefore(tableZone, document.getElementById('switchBtn'));
+                container.insertBefore(chartZone, null);
+                arrowIcon.classList.remove("fa-arrow-up");
+                arrowIcon.classList.add("fa-arrow-down");
+                statsFirst = false;
+            }
+        }
+
+        // Responsive: scroll to bottom section on mobile after switch (optionnel)
+        // (Tu peux activer si tu veux un scroll auto après switch)
+        // function scrollToBottomSection() {
+        //     if (!statsFirst) {
+        //         document.getElementById('chart-zone').scrollIntoView({behavior: "smooth"});
+        //     } else {
+        //         document.getElementById('table-zone').scrollIntoView({behavior: "smooth"});
+        //     }
+        // }
+
+        // Utilisateur persistant (par ID)
+        function getUserId() {
+            const params = new URLSearchParams(window.location.search);
+            let userId = params.get('user') || localStorage.getItem('luckyjet_user');
+            if (userId) localStorage.setItem('luckyjet_user', userId);
+            return userId;
+        }
+
+        // Affichage du nom de l'utilisateur à partir de users.txt
+        async function updateUserDisplayFromFile() {
+            const userId = getUserId();
+            if (!userId) {
+                document.getElementById('user-name').textContent = "Utilisateur inconnu";
+                document.getElementById('user-avatar').textContent = "?";
+                return;
+            }
+            try {
+                const response = await fetch('users.txt');
+                if (!response.ok) throw new Error('Erreur chargement users.txt');
+                const text = await response.text();
+                const lines = text.trim().split('\n');
+                let found = false;
+                for (const line of lines) {
+                    const [id, username] = line.split('|').map(s => s.trim());
+                    if (id === userId) {
+                        document.getElementById('user-name').textContent = username;
+                        document.getElementById('user-avatar').textContent = username[0]?.toUpperCase() || "?";
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    document.getElementById('user-name').textContent = "Utilisateur inconnu";
+                    document.getElementById('user-avatar').textContent = "?";
+                }
+            } catch (e) {
+                document.getElementById('user-name').textContent = "Utilisateur (erreur)";
+                document.getElementById('user-avatar').textContent = "?";
+            }
+        }
+        updateUserDisplayFromFile();
+
+        // Déconnexion : retour à index.html, mémoire effacée
+        function logout() {
+            localStorage.removeItem('luckyjet_user');
+            localStorage.removeItem('luckyjet_predictions');
+            localStorage.removeItem('luckyjet_accesstime');
+            window.location.href = "index.html";
+        }
+
+        // Heure d'accès utilisateur persistante
+        function getOrSetAccessTime() {
+            let t = localStorage.getItem('luckyjet_accesstime');
+            if (!t) {
+                t = new Date().toISOString();
+                localStorage.setItem('luckyjet_accesstime', t);
+            }
+            return new Date(t);
+        }
+        function updateCurrentTime() {
+            const accessDate = getOrSetAccessTime();
+            const timeString = accessDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('current-time').textContent = timeString;
+        }
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 1200);
+
+        // Connexion indicator
+        function setConnection(status) {
+            const bubble = document.getElementById('conn-bubble');
+            const text = document.getElementById('conn-text');
+            if (status === 'good') {
+                bubble.className = "conn-bubble good";
+                text.className = "conn-text good";
+                text.textContent = "Connecté";
+            } else if (status === 'medium') {
+                bubble.className = "conn-bubble medium";
+                text.className = "conn-text medium";
+                text.textContent = "Connexion lente";
+            } else {
+                bubble.className = "conn-bubble bad";
+                text.className = "conn-text bad";
+                text.textContent = "Déconnecté";
+            }
+        }
+        function checkConnection() {
+            if (navigator.onLine) {
+                setConnection('good');
+            } else {
+                setConnection('bad');
+                document.getElementById('lost-connection-popup').style.display = "flex";
+            }
+        }
+        window.addEventListener('online', () => { setConnection('good'); });
+        window.addEventListener('offline', () => {
+            setConnection('bad');
+            document.getElementById('lost-connection-popup').style.display = "flex";
+        });
+        function closePopup() {
+            document.getElementById('lost-connection-popup').style.display = "none";
+        }
+        setInterval(checkConnection, 3000);
+
+        // Algorithme avancé : moyenne pondérée récente + historique + médiane pour robustesse
+        function moyennePonderee(history, accessTime, predTime) {
+            if (!history.length) return null;
+            // Récente = 12 dernières valeurs avant predTime
+            const recent = history.filter(d => new Date(d.timestamp) < predTime).slice(-12);
+            const allAvg = history.reduce((s,v) => s+v.value, 0) / history.length;
+            const recAvg = recent.length ? recent.reduce((s,v) => s+v.value,0)/recent.length : allAvg;
+            // Ajout de la médiane pour plus de robustesse
+            const sorted = history.map(v => v.value).sort((a, b) => a - b);
+            const median = sorted.length % 2 === 0 ?
+                (sorted[sorted.length/2-1] + sorted[sorted.length/2]) / 2
+                : sorted[Math.floor(sorted.length/2)];
+            // Pondération : 60% récent, 25% global, 15% médiane
+            return recAvg*0.6 + allAvg*0.25 + median*0.15;
+        }
+
+        // Génère les heures futures
+        function getFuturePredictionTimes(accessDate, count = 8, startAfterMin = 20, minStepMin = 10, maxStepMin = 35) {
+            let times = [];
+            let date = new Date(accessDate.getTime());
+            date.setMinutes(date.getMinutes() + startAfterMin);
+            for (let i = 0; i < count; i++) {
+                times.push(new Date(date.getTime()));
+                let step = Math.floor(Math.random() * (maxStepMin - minStepMin + 1)) + minStepMin;
+                date.setMinutes(date.getMinutes() + step);
+            }
+            return times;
+        }
+
+        function confidenceIcon(conf) {
+            conf = parseInt(conf);
+            if (conf >= 80) return `<i class="fa-solid fa-circle-check" style="color:#40fd7c"></i>`;
+            if (conf >= 60) return `<i class="fa-solid fa-circle-half-stroke" style="color:#ffe066"></i>`;
+            if (conf >= 40) return `<i class="fa-solid fa-triangle-exclamation" style="color:#ffbb44"></i>`;
+            return `<i class="fa-solid fa-circle-xmark" style="color:#ff4c71"></i>`;
+        }
+        function savePredictions(preds) {
+            localStorage.setItem('luckyjet_predictions', JSON.stringify(preds));
+        }
+        function loadPredictions() {
+            const s = localStorage.getItem('luckyjet_predictions');
+            return s ? JSON.parse(s) : null;
+        }
+        function clearPredictions() {
+            localStorage.removeItem('luckyjet_predictions');
+        }
+
+        // Loader & connexion intelligente (max 6s, connexion prise en compte)
+        let predictionsReady = false;
+        let connectionReady = false;
+        let loaderTimeout = null;
+        let loaderMaxDelay = 6000; // 6 secondes
+
+        function checkConnectionStatus() {
+            if (navigator.onLine) {
+                connectionReady = true;
+                setConnection('good');
+            } else {
+                connectionReady = false;
+                setConnection('bad');
+            }
+        }
+        function tryDisplayContent() {
+            if (predictionsReady && connectionReady) {
+                clearTimeout(loaderTimeout);
+                document.getElementById('loader-bg').style.display = 'none';
+                document.getElementById('main-content').style.display = 'flex';
+            }
+        }
+        function endLoaderMaxDelay() {
+            if (predictionsReady && connectionReady) {
+                document.getElementById('loader-bg').style.display = 'none';
+                document.getElementById('main-content').style.display = 'flex';
+                return;
+            }
+            if (predictionsReady) {
+                document.getElementById('loader-bg').style.display = 'none';
+                document.getElementById('main-content').style.display = 'flex';
+                setConnection('bad');
+                return;
+            }
+            document.getElementById('loader-bg').style.display = 'none';
+            document.getElementById('main-content').style.display = 'none';
+            alert("Échec du chargement des prédictions.\nVérifiez votre connexion Internet.");
+        }
+
+        // --- Rafraîchissement automatique si toutes les heures sont passées ---
+        function shouldRefreshPredictions(predictions) {
+            if (!predictions || !predictions.length) return true;
+            const now = new Date();
+            // Parse heures dans le format "HH:mm"
+            return predictions.every(pred => {
+                const [h, m] = pred.heure.split(':').map(Number);
+                let predDate = new Date();
+                predDate.setHours(h, m, 0, 0);
+                return predDate <= now;
+            });
+        }
+
+        // --- Affichage du graphique multicolore ---
+        let chartInstance = null;
+        function displayChart(predictions) {
+            const ctx = document.getElementById('pred-chart').getContext('2d');
+            const labels = predictions.map(p => p.heure);
+            const data = predictions.map(p => parseFloat(p.predictedValue));
+            // Couleurs dynamiques par point
+            const pointColors = data.map(v => {
+                if (v >= 2) return "#40fd7c";        // vert
+                else if (v >= 1.30) return "#ffe066"; // orange
+                else return "#ff4c71";                 // rouge
+            });
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Cote Prédite",
+                        data: data,
+                        borderColor: "#49a6fb",
+                        backgroundColor: "rgba(73,166,251,0.13)",
+                        pointBackgroundColor: pointColors,
+                        pointBorderColor: pointColors,
+                        tension: 0.34,
+                        pointRadius: 6,
+                        pointHoverRadius: 10,
+                        fill: true,
+                        segment: {
+                            borderColor: ctx => {
+                                const idx = ctx.p1DataIndex;
+                                if (data[idx] >= 2) return "#40fd7c";
+                                else if (data[idx] >= 1.3) return "#ffe066";
+                                else return "#ff4c71";
+                            },
+                        },
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return "Cote : " + context.parsed.y;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 1,
+                            suggestedMax: Math.max(2.2, ...data) + 0.3,
+                            ticks: { color: "#49a6fb" }
+                        },
+                        x: { ticks: { color: "#bde0ff" } }
+                    }
+                }
+            });
+        }
+
+        // Modifie fetchAndDisplayPredictions pour notifier quand c’est prêt
+        async function fetchAndDisplayPredictions(dataFile = 'data/prediction_data.txt', force = false) {
+            const tableBody = document.getElementById('predictions-table');
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = '';
+            tableBody.innerHTML = '<tr><td colspan="3">Chargement des prédictions...</td></tr>';
+            try {
+                let predictions = loadPredictions();
+                let accessTime = getOrSetAccessTime();
+                // Si toutes les heures sont passées ou absence ou force, régénérer
+                if (force || !predictions || shouldRefreshPredictions(predictions)) {
+                    clearPredictions(); // Nettoie l'ancien
+                    const response = await fetch(dataFile);
+                    if (!response.ok) throw new Error('Impossible de charger les données');
+                    const data = await response.text();
+                    const rows = data.split('\n').filter(line => line.trim() !== '');
+                    const history = rows.map(row => {
+                        const [timestamp, value] = row.split('|').map(item => item.trim());
+                        return { timestamp, value: parseFloat(value) };
+                    });
+                    // Calcul des prédictions (algorithme amélioré)
+                    const futureTimes = getFuturePredictionTimes(accessTime, 8, 20, 10, 35);
+                    const allAvg = history.reduce((s,v) => s+v.value, 0) / history.length;
+                    const ecartType = Math.sqrt(history.reduce((acc, v) => acc + Math.pow(v.value - allAvg, 2), 0) / history.length);
+                    predictions = [];
+                    for (let targetTime of futureTimes) {
+                        let predValue = moyennePonderee(history, accessTime, targetTime);
+                        // Ajout d'un bruit réaliste avec un bruit gaussien
+                        let bruit = (Math.random() + Math.random() + Math.random() - 1.5) * ecartType * 0.32;
+                        predValue += bruit;
+                        // Nouvelle règle : jamais sous 1.01
+                        if (predValue < 1.01) continue;
+                        let conf = Math.min(100, Math.max(30, Math.round(
+                            90-(Math.abs(predValue-allAvg)/(ecartType+0.01))*50
+                        )));
+                        predictions.push({
+                            heure: (targetTime.getHours()<10?'0':'')+targetTime.getHours()+':' + (targetTime.getMinutes()<10?'0':'')+targetTime.getMinutes(),
+                            predictedValue: predValue ? predValue.toFixed(2) : '—',
+                            confidence: predValue ? conf + '%' : '—',
+                            confidenceInt: conf
+                        });
+                        if (predictions.length >= 8) break; // On limite à 8 affichées
+                    }
+                    savePredictions(predictions);
+                }
+                // Affichage tableau
+                tableBody.innerHTML = '';
+                if (!predictions.length) {
+                    tableBody.innerHTML = '<tr><td colspan="3">Aucune prédiction disponible.</td></tr>';
+                } else {
+                    predictions.forEach(pred => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${pred.heure}</td>
+                            <td>${pred.predictedValue}</td>
+                            <td>${confidenceIcon(pred.confidenceInt)} ${pred.confidence}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
+                // Affichage graphique
+                displayChart(predictions);
+
+                predictionsReady = true;
+                tryDisplayContent();
+            } catch (err) {
+                tableBody.innerHTML = '<tr><td colspan="3">Aucune donnée disponible.</td></tr>';
+                errorMessage.textContent = err.message;
+                clearPredictions();
+                predictionsReady = false;
+            }
+        }
+
+        // Loader intelligent au démarrage
+        document.addEventListener('DOMContentLoaded', () => {
+            predictionsReady = false;
+            connectionReady = false;
+            checkConnectionStatus();
+            fetchAndDisplayPredictions();
+            // On surveille la connexion toutes les 0.7s pendant le loader
+            let connInterval = setInterval(() => {
+                checkConnectionStatus();
+                if (connectionReady && predictionsReady) {
+                    clearInterval(connInterval);
+                    tryDisplayContent();
+                }
+            }, 700);
+            // Timeout Max : stoppe tout à 6s
+            loaderTimeout = setTimeout(() => {
+                clearInterval(connInterval);
+                endLoaderMaxDelay();
+            }, loaderMaxDelay);
+
+            // Vérifie toutes les 30s si toutes les heures sont passées
+            setInterval(() => {
+                let predictions = loadPredictions();
+                if (shouldRefreshPredictions(predictions)) {
+                    fetchAndDisplayPredictions('data/prediction_data.txt', true);
+                }
+            }, 30000); // Toutes les 30 secondes
+        });
+    </script>
+</body>
+</html>
