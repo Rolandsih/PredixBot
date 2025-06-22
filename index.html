@@ -1,272 +1,144 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Convertisseur Timestamp/Multi (Mobile)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <style>
-    html, body {
-      margin: 0; padding: 0;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: var(--bg, #f6f7fa);
-      color: var(--txt, #222);
-      min-height: 100vh;
-      overscroll-behavior: contain;
-      font-size: 18px;
-      -webkit-tap-highlight-color: transparent;
-    }
-    @media (prefers-color-scheme: dark) {
-      html, body {
-        --bg: #181a1b;
-        --txt: #eee;
-        --box: #232527;
-        --tbl: #232527;
-        --line: #333;
-        --accent: #1a75ff;
-      }
-    }
-    @media (prefers-color-scheme: light) {
-      html, body {
-        --bg: #f6f7fa;
-        --txt: #222;
-        --box: #fff;
-        --tbl: #f0f6ff;
-        --line: #eee;
-        --accent: #1a75ff;
-      }
-    }
-    .container {
-      background: var(--box, #fff);
-      margin: 0;
-      border-radius: 0 0 1em 1em;
-      box-shadow: 0 2px 8px #0002;
-      padding: 1em 0.7em 0.7em 0.7em;
-      max-width: 100vw;
-    }
-    h1 {
-      font-size: 1.3em;
-      text-align: center;
-      margin: 0.5em 0 0.7em 0;
-      letter-spacing: 0.02em;
-    }
-    label {
-      font-size: 1em;
-      font-weight: 500;
-      display: block;
-      margin-top: 1em;
-    }
-    textarea, input[type="file"], input[type="datetime-local"] {
-      width: 100%;
-      border-radius: 0.6em;
-      border: 1px solid var(--line, #eee);
-      padding: 0.85em;
-      margin-top: 0.5em;
-      font-size: 1em;
-      background: var(--tbl, #f0f6ff);
-      color: var(--txt, #222);
-      box-sizing: border-box;
-      resize: vertical;
-    }
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.7em;
-      justify-content: space-between;
-      margin: 1.2em 0 0.7em 0;
-    }
-    .actions button {
-      flex: 1 1 40%;
-      background: var(--accent, #1a75ff);
-      color: #fff;
-      border: none;
-      border-radius: 0.6em;
-      padding: 0.85em 0;
-      font-size: 1.1em;
-      font-weight: 600;
-      margin: 0;
-      min-width: 40vw;
-      cursor: pointer;
-      transition: background 0.2s;
-      box-shadow: 0 2px 4px #0001;
-    }
-    .actions button:active {
-      background: #003366;
-    }
-    .flexrow { display: flex; gap: .7em; margin-top: .7em; }
-    .flexrow label { flex: 1; margin: 0; font-size: .98em; }
-    .stat {
-      font-size: .95em;
-      text-align: right;
-      margin: 0.5em 0;
-      color: var(--accent, #1a75ff);
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: var(--tbl, #f0f6ff);
-      margin-top: 1em;
-      font-size: 1em;
-    }
-    th, td {
-      padding: 0.5em 0.3em;
-      border: 1px solid var(--line, #eee);
-      text-align: center;
-    }
-    th {
-      background: var(--accent, #1a75ff);
-      color: #fff;
-      font-size: 1em;
-    }
-    tr:nth-child(even) { background: var(--tbl, #e8f1ff); }
-    .msg { font-size: .97em; margin: .7em 0; color: #d22;}
-    @media (max-width: 600px) {
-      html, body { font-size: 16px; }
-      .container { border-radius: 0; padding: 0.6em 0.3em 0.6em 0.3em;}
-      .actions button { min-width: 120px; font-size: 1em; }
-      th, td { font-size: .95em; }
-    }
-    /* Sticky bottom bar for actions on mobile */
-    .bottom-actions {
-      position: fixed;
-      left: 0; right: 0; bottom: 0;
-      background: var(--box, #fff);
-      box-shadow: 0 -2px 12px #0003;
-      padding: .7em .7em .7em .7em;
-      display: flex;
-      gap: .7em;
-      z-index: 100;
-    }
-    .bottom-actions button {
-      flex: 1 1 0;
-      font-size: 1em;
-      padding: .9em 0;
-      border-radius: .7em;
-    }
-    @media (min-width:700px){
-      .bottom-actions { position: static; box-shadow: none; padding: 0;}
-      .container { border-radius: 1em; margin: 2em auto; max-width: 540px;}
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Convertisseur JSON → CSV (timestamp, multiplicateur)</title>
+    <style>
+        body {
+            background: #f7f7f7;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        h2 {
+            margin-top: 2rem;
+            color: #333;
+        }
+        textarea {
+            width: 90vw;
+            max-width: 700px;
+            height: 120px;
+            font-size: 1rem;
+            margin: 1rem 0;
+            padding: 0.8rem;
+        }
+        button {
+            background: #007bff;
+            color: #fff;
+            border: none;
+            padding: 0.8rem 1.6rem;
+            font-size: 1.1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        table {
+            background: #fff;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+            min-width: 320px;
+            box-shadow: 0 2px 10px #ddd;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 0.6em 1em;
+            text-align: center;
+        }
+        th {
+            background: #f0f0f0;
+        }
+        .export {
+            margin-bottom: 1.5rem;
+        }
+        .csv-output {
+            width: 90vw;
+            max-width: 700px;
+            height: 80px;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Convertisseur<br>Timestamp / Multiplicateur</h1>
-    <input type="file" id="inputFile" accept=".txt,.csv,.log" style="display:none" />
-    <label for="inputData">Colle, tape, ou importe un fichier :</label>
-    <textarea id="inputData" placeholder="2025-06-21 14:01:25,1.42&#10;2025-06-21 14:02:10,5.87"></textarea>
-    <div class="flexrow">
-      <label>Date début:<br>
-        <input type="datetime-local" id="dateStart" onchange="autoConvert()">
-      </label>
-      <label>Date fin:<br>
-        <input type="datetime-local" id="dateEnd" onchange="autoConvert()">
-      </label>
+    <h2>Convertisseur JSON → CSV (timestamp, multiplicateur)</h2>
+    <p>Colle ici tes données JSON :</p>
+    <textarea id="jsonInput" placeholder='Colle ici ton tableau JSON...'></textarea><br>
+    <button onclick="convertJSON()">Convertir</button>
+    <div id="tableDiv"></div>
+    <div class="export">
+      <button onclick="exportCSV()">Exporter en CSV</button>
     </div>
-    <div class="stat" id="stat"></div>
-    <div id="msg" class="msg"></div>
-    <div style="overflow-x:auto;">
-      <table id="table"></table>
-    </div>
-  </div>
-  <div class="bottom-actions">
-    <button onclick="document.getElementById('inputFile').click()">Fichier</button>
-    <button onclick="convert()">Convertir</button>
-    <button onclick="copyTable()">Copier</button>
-    <button onclick="downloadCSV()">CSV</button>
-    <button onclick="downloadExcel()">Excel</button>
-    <button onclick="clearAll()">Effacer</button>
-  </div>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script>
-    // Auto conversion on input
-    document.getElementById('inputData').addEventListener('input', autoConvert);
-    // File input
-    document.getElementById('inputFile').addEventListener('change', function() {
-      if (this.files.length) readFile(this.files[0]);
-    });
-    // Drag and drop
-    document.addEventListener('dragover', e => e.preventDefault());
-    document.addEventListener('drop', e => {
-      e.preventDefault();
-      if (e.dataTransfer.files.length) readFile(e.dataTransfer.files[0]);
-    });
+    <textarea id="csvOutput" class="csv-output" readonly placeholder="Le CSV apparaîtra ici..."></textarea>
 
-    function readFile(file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        document.getElementById('inputData').value = e.target.result;
-        autoConvert();
-      };
-      reader.readAsText(file);
-    }
-
-    let lastData = [];
-    function autoConvert() { setTimeout(convert, 100); }
-
-    function convert() {
-      const input = document.getElementById('inputData').value;
-      const lines = input.split(/\r?\n/);
-      const regex = /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),\s*([\d.]+)$/;
-      let results = [];
-      const start = document.getElementById('dateStart').value;
-      const end   = document.getElementById('dateEnd').value;
-      let minDate = start ? new Date(start.replace('T', ' ')) : null;
-      let maxDate = end   ? new Date(end.replace('T', ' ')) : null;
-      for (let line of lines) {
-        let match = line.match(regex);
-        if (match) {
-          let ts = match[1];
-          let m = match[2];
-          let d = new Date(ts.replace(' ', 'T'));
-          if ((minDate && d < minDate) || (maxDate && d > maxDate)) continue;
-          results.push({timestamp: ts, multiplicateur: m});
+    <script>
+        // Simule une date aléatoire (pour la démo) si aucune n'est présente
+        function randomDate() {
+            const now = new Date();
+            const delta = Math.floor(Math.random() * 1000000);
+            return new Date(now.getTime() - delta * 1000);
         }
-      }
-      lastData = results;
-      showTable(results);
-      document.getElementById('stat').textContent = results.length ? `${results.length} lignes` : '';
-      document.getElementById('msg').innerHTML = results.length ? '' : '<span>Aucune donnée valide trouvée.</span>';
-    }
-    function showTable(data) {
-      const table = document.getElementById('table');
-      if (!data.length) { table.innerHTML = ''; return; }
-      let html = `<thead><tr><th>#</th><th>Date/heure</th><th>Multiplicateur</th></tr></thead><tbody>`;
-      data.forEach((row, i) => {
-        html += `<tr><td>${i+1}</td><td>${row.timestamp}</td><td>${row.multiplicateur}</td></tr>`;
-      });
-      html += '</tbody>';
-      table.innerHTML = html;
-    }
-    function copyTable() {
-      if (!lastData.length) return;
-      let txt = 'timestamp,multiplicateur\n' + lastData.map(r => `${r.timestamp},${r.multiplicateur}`).join('\n');
-      navigator.clipboard.writeText(txt);
-      document.getElementById('msg').innerHTML = `<span style="color:green">Tableau copié !</span>`;
-    }
-    function downloadCSV() {
-      if (!lastData.length) return;
-      let csv = 'timestamp,multiplicateur\n' + lastData.map(r => `${r.timestamp},${r.multiplicateur}`).join('\n');
-      const blob = new Blob([csv], {type: "text/csv"});
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "tableau.csv";
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-    function downloadExcel() {
-      if (!lastData.length) return;
-      const ws = XLSX.utils.json_to_sheet(lastData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Feuille1");
-      XLSX.writeFile(wb, "tableau.xlsx");
-    }
-    function clearAll() {
-      document.getElementById('inputData').value = '';
-      document.getElementById('table').innerHTML = '';
-      document.getElementById('stat').textContent = '';
-      document.getElementById('msg').innerHTML = '';
-      lastData = [];
-    }
-  </script>
+        // Conversion de timestamp UNIX en format lisible
+        function formatDate(d) {
+            const pad = (v) => v < 10 ? "0" + v : v;
+            return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) +
+                " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+        }
+
+        let lastTimestamps = {};
+
+        function convertJSON() {
+            let input = document.getElementById('jsonInput').value.trim();
+            let arr;
+            // Corrige si l'utilisateur oublie les crochets autour du JSON
+            if (input && input[0] !== "[") input = "[" + input + "]";
+            try {
+                arr = JSON.parse(input);
+            } catch(e) {
+                document.getElementById('tableDiv').innerHTML = "<span style='color:red'>Erreur de parsing JSON !</span>";
+                document.getElementById('csvOutput').value = "";
+                return;
+            }
+            // Affiche la table
+            let html = "<table><thead><tr><th>Timestamp</th><th>Multiplicateur</th></tr></thead><tbody>";
+            let csv = "timestamp,multiplicateur\n";
+            arr.forEach((obj, i) => {
+                // Génère un timestamp si absent (ou à adapter selon tes vraies données !)
+                let timestamp = obj.timestamp;
+                if (!timestamp) {
+                    // Pour la démo, on simule un timestamp
+                    let fake = new Date(Date.now() - (arr.length - i) * 60000);
+                    timestamp = formatDate(fake);
+                }
+                // Prends le top_coefficient comme multiplicateur
+                let mult = obj.top_coefficient || (obj.final_values && obj.final_values[0]) || "";
+                html += `<tr><td>${timestamp}</td><td>${mult}</td></tr>`;
+                csv += `${timestamp},${mult}\n`;
+            });
+            html += "</tbody></table>";
+            document.getElementById('tableDiv').innerHTML = html;
+            document.getElementById('csvOutput').value = csv.trim();
+        }
+
+        function exportCSV() {
+            let csv = document.getElementById('csvOutput').value;
+            if (!csv) return;
+            const blob = new Blob([csv], {type: 'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "export.csv";
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+    </script>
 </body>
 </html>
