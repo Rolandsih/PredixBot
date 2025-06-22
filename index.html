@@ -2,15 +2,14 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Convertisseur JSON → Liste horodatée</title>
+  <title>Convertisseur Crash Gateway JSON → Liste horodatée</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <style>
     html, body {
       margin: 0; padding: 0;
       font-family: 'Segoe UI', Arial, sans-serif;
       background: #f5f6fa;
-      min-height: 100vh;
-      width: 100vw;
+      min-height: 100vh; width: 100vw;
     }
     .container {
       max-width: 500px;
@@ -26,12 +25,12 @@
       text-align: center;
       margin-bottom: 1em;
       color: #222d;
-      font-size: 1.4em;
+      font-size: 1.3em;
     }
-    textarea, .output {
+    textarea, .output, input[type="url"] {
       width: 100%;
       box-sizing: border-box;
-      font-size: 1.1em;
+      font-size: 1.08em;
       padding: 1em;
       margin: 0.7em 0;
       border-radius: 10px;
@@ -39,30 +38,41 @@
       background: #f7faff;
       resize: vertical;
     }
-    textarea { min-height: 100px; max-height: 300px; }
-    .output { min-height: 120px; max-height: 300px; background: #f3f9fa;}
-    button {
+    textarea { min-height: 90px; max-height: 260px; }
+    .output { min-height: 120px; max-height: 280px; background: #f3f9fa;}
+    button, label.upload {
       width: 100%;
       padding: 1em;
-      font-size: 1.2em;
-      border: none;
-      background: linear-gradient(90deg, #30cfd0 0%, #330867 100%);
-      color: #fff;
+      font-size: 1.13em;
       border-radius: 10px;
-      margin-top: 0.7em;
-      margin-bottom: 0.7em;
+      margin-top: 0.4em;
+      margin-bottom: 0.4em;
       font-weight: bold;
       box-shadow: 0 2px 8px #0001;
       cursor: pointer;
       transition: background 0.2s;
     }
+    button {
+      border: none;
+      background: linear-gradient(90deg, #30cfd0 0%, #330867 100%);
+      color: #fff;
+    }
     button:active {
       background: linear-gradient(90deg, #330867 0%, #30cfd0 100%);
     }
-    .notice {
-      font-size: 0.98em;
-      color: #444b;
+    label.upload {
+      background: #f1eaff;
+      color: #400080;
+      display: block;
+      text-align: center;
+      border: 1.5px dashed #a17cff;
       margin-bottom: 0.5em;
+    }
+    input[type="file"] { display: none; }
+    .notice {
+      font-size: 0.97em;
+      color: #444b;
+      margin-bottom: 0.4em;
       text-align: center;
     }
     @media (max-width: 600px) {
@@ -70,22 +80,27 @@
         margin: 0;
         border-radius: 0;
         box-shadow: none;
-        padding: 1em 0.3em 1.5em 0.3em;
+        padding: 1em 0.3em 1.3em 0.3em;
       }
-      h2 { font-size: 1.1em; }
-      button, textarea, .output { font-size: 1em; }
+      h2 { font-size: 1.07em; }
+      button, textarea, .output, label.upload, input[type="url"] { font-size: 0.98em; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Convertisseur JSON → Liste horodatée</h2>
+    <h2>Crash Gateway JSON → Liste horodatée</h2>
     <div class="notice">
-      Colle ton JSON <b>directement</b> ci-dessous.<br>
-      <b>Tout est automatique</b>&nbsp;: la première date se base sur le JSON.<br>
-      Format de sortie : <code>YYYY-MM-DDTHH:mm:ss | valeur</code>
+      <strong>1.</strong> Colle l’URL de la page Crash ci-dessous, puis clique sur « Charger » :<br>
+      <input type="url" id="urlInput" placeholder="Colle ici l’URL de l’historique crash…" value="https://crash-gateway-cc-cr.gamedev-tech.cc/history?id_n=1play_luckyjet&id_i=1&round_id=3439a721-161a-402d-b15a-f9227d25fef4"/>
+      <button onclick="fetchFromUrl()">Charger</button>
+      <span style="font-size:.98em;color:#666;">Ou colle/importes ton texte JSON ci-dessous :</span>
+      <label for="fileInput" class="upload">📁 Importer un fichier texte</label>
+      <input type="file" id="fileInput" accept=".txt,.json" />
+      <textarea id="jsonInput" placeholder="Colle ici ton JSON ou texte brut"></textarea>
+      <strong>2.</strong> Clique sur « Convertir » pour obtenir la liste formatée.<br>
+      Format : <code>YYYY-MM-DDTHH:mm:ss | valeur</code>
     </div>
-    <textarea id="jsonInput" placeholder="Colle ici ton JSON brut"></textarea>
     <button onclick="convertJSON()">Convertir</button>
     <textarea readonly class="output" id="output" placeholder="La liste formatée apparaîtra ici..."></textarea>
     <button onclick="copyOutput()">Copier le résultat</button>
@@ -102,31 +117,49 @@
         pad(d.getSeconds());
     }
     function detectFirstDate(obj) {
-      // Cherche une propriété timestamp, sinon prend l'instant courant
       if (obj && typeof obj === "object") {
         for (const key in obj) {
           if (typeof obj[key] === "string" && /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}$/.test(obj[key])) {
             return new Date(obj[key].replace(" ", "T"));
           }
           if (typeof obj[key] === "number" && obj[key] > 1000000000 && obj[key] < 9999999999) {
-            // timestamp UNIX en secondes
             return new Date(obj[key]*1000);
           }
         }
       }
       return null;
     }
+    async function fetchFromUrl() {
+      const url = document.getElementById('urlInput').value.trim();
+      if (!url) {
+        document.getElementById('status').innerText = "❌ URL manquante.";
+        return;
+      }
+      document.getElementById('status').innerText = "⏳ Chargement...";
+      try {
+        // Pour le cross-origin fetch, il faut que le serveur autorise l'accès (CORS)
+        const response = await fetch(url, {mode: "cors"});
+        if (!response.ok) throw new Error("Erreur HTTP");
+        const text = await response.text();
+        // Détecte JSON dans la page (si toute la page est JSON c'est direct, sinon essaye d'extraire JSON brute)
+        let json = text;
+        // Si c'est un objet JSON dans une variable JS, essaye d'extraire
+        const match = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+        if (match) json = match[0];
+        document.getElementById('jsonInput').value = json.trim();
+        document.getElementById('status').innerText = "✅ Données chargées. Clique sur Convertir.";
+      } catch (e) {
+        document.getElementById('status').innerText = "❌ Impossible de charger : "+e;
+      }
+    }
     function convertJSON() {
       const input = document.getElementById('jsonInput').value.trim();
-      let arr;
-      let output = "";
-      let status = "";
+      let arr, output = "", status = "";
       if (!input) {
         document.getElementById('output').value = "";
         document.getElementById('status').innerText = "";
         return;
       }
-      // Corrige crochets oubliés
       let json = input;
       if (json && json[0] !== "[") json = "[" + json + "]";
       try {
@@ -141,11 +174,9 @@
         document.getElementById('status').innerText = "❌ JSON vide ou au mauvais format.";
         return;
       }
-      // Détecte la date de départ automatiquement
       let date = detectFirstDate(arr[0]);
       if (!date) date = new Date();
       status = "✅ Date de départ : " + formatDate(date);
-
       for (let i = 0; i < arr.length; i++) {
         const coeff = arr[i].top_coefficient ?? (arr[i].final_values && arr[i].final_values[0]) ?? "";
         output += formatDate(date) + " | " + coeff + "\n";
@@ -160,10 +191,21 @@
       out.setSelectionRange(0, 99999);
       document.execCommand('copy');
       document.getElementById('status').innerText = "✅ Résultat copié !";
-      setTimeout(() => {
-        document.getElementById('status').innerText = "";
-      }, 1400);
+      setTimeout(() => { document.getElementById('status').innerText = ""; }, 1400);
     }
+    // Lecture du fichier importé
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      if (e.target.files && e.target.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          document.getElementById('jsonInput').value = ev.target.result;
+        };
+        reader.readAsText(e.target.files[0]);
+      }
+    });
+    document.querySelector('label.upload').addEventListener('click', function() {
+      document.getElementById('fileInput').click();
+    });
   </script>
 </body>
 </html>
