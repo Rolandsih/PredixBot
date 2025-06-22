@@ -1,144 +1,169 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Convertisseur JSON → CSV (timestamp, multiplicateur)</title>
-    <style>
-        body {
-            background: #f7f7f7;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-        h2 {
-            margin-top: 2rem;
-            color: #333;
-        }
-        textarea {
-            width: 90vw;
-            max-width: 700px;
-            height: 120px;
-            font-size: 1rem;
-            margin: 1rem 0;
-            padding: 0.8rem;
-        }
-        button {
-            background: #007bff;
-            color: #fff;
-            border: none;
-            padding: 0.8rem 1.6rem;
-            font-size: 1.1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-bottom: 1rem;
-        }
-        button:hover {
-            background: #0056b3;
-        }
-        table {
-            background: #fff;
-            border-collapse: collapse;
-            margin-bottom: 2rem;
-            min-width: 320px;
-            box-shadow: 0 2px 10px #ddd;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 0.6em 1em;
-            text-align: center;
-        }
-        th {
-            background: #f0f0f0;
-        }
-        .export {
-            margin-bottom: 1.5rem;
-        }
-        .csv-output {
-            width: 90vw;
-            max-width: 700px;
-            height: 80px;
-            font-size: 1rem;
-            margin-bottom: 1.5rem;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Convertisseur JSON → Liste horodatée</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    html, body {
+      margin: 0; padding: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f6fa;
+      min-height: 100vh;
+      width: 100vw;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 1.5em .8em 2.5em .8em;
+      box-sizing: border-box;
+      background: #fff;
+      box-shadow: 0 4px 18px rgba(0,0,0,.08);
+      border-radius: 18px;
+      margin-top: 1.5em;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 1em;
+      color: #222d;
+      font-size: 1.4em;
+    }
+    textarea, .output {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 1.1em;
+      padding: 1em;
+      margin: 0.7em 0;
+      border-radius: 10px;
+      border: 1px solid #c5c5c5;
+      background: #f7faff;
+      resize: vertical;
+    }
+    textarea { min-height: 100px; max-height: 300px; }
+    .output { min-height: 120px; max-height: 300px; background: #f3f9fa;}
+    button {
+      width: 100%;
+      padding: 1em;
+      font-size: 1.2em;
+      border: none;
+      background: linear-gradient(90deg, #30cfd0 0%, #330867 100%);
+      color: #fff;
+      border-radius: 10px;
+      margin-top: 0.7em;
+      margin-bottom: 0.7em;
+      font-weight: bold;
+      box-shadow: 0 2px 8px #0001;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:active {
+      background: linear-gradient(90deg, #330867 0%, #30cfd0 100%);
+    }
+    .notice {
+      font-size: 0.98em;
+      color: #444b;
+      margin-bottom: 0.5em;
+      text-align: center;
+    }
+    @media (max-width: 600px) {
+      .container {
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 1em 0.3em 1.5em 0.3em;
+      }
+      h2 { font-size: 1.1em; }
+      button, textarea, .output { font-size: 1em; }
+    }
+  </style>
 </head>
 <body>
-    <h2>Convertisseur JSON → CSV (timestamp, multiplicateur)</h2>
-    <p>Colle ici tes données JSON :</p>
-    <textarea id="jsonInput" placeholder='Colle ici ton tableau JSON...'></textarea><br>
-    <button onclick="convertJSON()">Convertir</button>
-    <div id="tableDiv"></div>
-    <div class="export">
-      <button onclick="exportCSV()">Exporter en CSV</button>
+  <div class="container">
+    <h2>Convertisseur JSON → Liste horodatée</h2>
+    <div class="notice">
+      Colle ton JSON <b>directement</b> ci-dessous.<br>
+      <b>Tout est automatique</b>&nbsp;: la première date se base sur le JSON.<br>
+      Format de sortie : <code>YYYY-MM-DDTHH:mm:ss | valeur</code>
     </div>
-    <textarea id="csvOutput" class="csv-output" readonly placeholder="Le CSV apparaîtra ici..."></textarea>
-
-    <script>
-        // Simule une date aléatoire (pour la démo) si aucune n'est présente
-        function randomDate() {
-            const now = new Date();
-            const delta = Math.floor(Math.random() * 1000000);
-            return new Date(now.getTime() - delta * 1000);
+    <textarea id="jsonInput" placeholder="Colle ici ton JSON brut"></textarea>
+    <button onclick="convertJSON()">Convertir</button>
+    <textarea readonly class="output" id="output" placeholder="La liste formatée apparaîtra ici..."></textarea>
+    <button onclick="copyOutput()">Copier le résultat</button>
+    <div id="status" class="notice"></div>
+  </div>
+  <script>
+    function pad(n) { return n < 10 ? "0"+n : n; }
+    function formatDate(d) {
+      return d.getFullYear() + "-" +
+        pad(d.getMonth()+1) + "-" +
+        pad(d.getDate()) + "T" +
+        pad(d.getHours()) + ":" +
+        pad(d.getMinutes()) + ":" +
+        pad(d.getSeconds());
+    }
+    function detectFirstDate(obj) {
+      // Cherche une propriété timestamp, sinon prend l'instant courant
+      if (obj && typeof obj === "object") {
+        for (const key in obj) {
+          if (typeof obj[key] === "string" && /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}$/.test(obj[key])) {
+            return new Date(obj[key].replace(" ", "T"));
+          }
+          if (typeof obj[key] === "number" && obj[key] > 1000000000 && obj[key] < 9999999999) {
+            // timestamp UNIX en secondes
+            return new Date(obj[key]*1000);
+          }
         }
-        // Conversion de timestamp UNIX en format lisible
-        function formatDate(d) {
-            const pad = (v) => v < 10 ? "0" + v : v;
-            return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) +
-                " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
-        }
+      }
+      return null;
+    }
+    function convertJSON() {
+      const input = document.getElementById('jsonInput').value.trim();
+      let arr;
+      let output = "";
+      let status = "";
+      if (!input) {
+        document.getElementById('output').value = "";
+        document.getElementById('status').innerText = "";
+        return;
+      }
+      // Corrige crochets oubliés
+      let json = input;
+      if (json && json[0] !== "[") json = "[" + json + "]";
+      try {
+        arr = JSON.parse(json);
+      } catch (e) {
+        document.getElementById('output').value = "";
+        document.getElementById('status').innerText = "❌ Erreur de parsing JSON !";
+        return;
+      }
+      if (!Array.isArray(arr) || arr.length === 0) {
+        document.getElementById('output').value = "";
+        document.getElementById('status').innerText = "❌ JSON vide ou au mauvais format.";
+        return;
+      }
+      // Détecte la date de départ automatiquement
+      let date = detectFirstDate(arr[0]);
+      if (!date) date = new Date();
+      status = "✅ Date de départ : " + formatDate(date);
 
-        let lastTimestamps = {};
-
-        function convertJSON() {
-            let input = document.getElementById('jsonInput').value.trim();
-            let arr;
-            // Corrige si l'utilisateur oublie les crochets autour du JSON
-            if (input && input[0] !== "[") input = "[" + input + "]";
-            try {
-                arr = JSON.parse(input);
-            } catch(e) {
-                document.getElementById('tableDiv').innerHTML = "<span style='color:red'>Erreur de parsing JSON !</span>";
-                document.getElementById('csvOutput').value = "";
-                return;
-            }
-            // Affiche la table
-            let html = "<table><thead><tr><th>Timestamp</th><th>Multiplicateur</th></tr></thead><tbody>";
-            let csv = "timestamp,multiplicateur\n";
-            arr.forEach((obj, i) => {
-                // Génère un timestamp si absent (ou à adapter selon tes vraies données !)
-                let timestamp = obj.timestamp;
-                if (!timestamp) {
-                    // Pour la démo, on simule un timestamp
-                    let fake = new Date(Date.now() - (arr.length - i) * 60000);
-                    timestamp = formatDate(fake);
-                }
-                // Prends le top_coefficient comme multiplicateur
-                let mult = obj.top_coefficient || (obj.final_values && obj.final_values[0]) || "";
-                html += `<tr><td>${timestamp}</td><td>${mult}</td></tr>`;
-                csv += `${timestamp},${mult}\n`;
-            });
-            html += "</tbody></table>";
-            document.getElementById('tableDiv').innerHTML = html;
-            document.getElementById('csvOutput').value = csv.trim();
-        }
-
-        function exportCSV() {
-            let csv = document.getElementById('csvOutput').value;
-            if (!csv) return;
-            const blob = new Blob([csv], {type: 'text/csv'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = "export.csv";
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }, 100);
-        }
-    </script>
+      for (let i = 0; i < arr.length; i++) {
+        const coeff = arr[i].top_coefficient ?? (arr[i].final_values && arr[i].final_values[0]) ?? "";
+        output += formatDate(date) + " | " + coeff + "\n";
+        date.setMinutes(date.getMinutes() + 1);
+      }
+      document.getElementById('output').value = output.trim();
+      document.getElementById('status').innerText = status;
+    }
+    function copyOutput() {
+      const out = document.getElementById('output');
+      out.select();
+      out.setSelectionRange(0, 99999);
+      document.execCommand('copy');
+      document.getElementById('status').innerText = "✅ Résultat copié !";
+      setTimeout(() => {
+        document.getElementById('status').innerText = "";
+      }, 1400);
+    }
+  </script>
 </body>
 </html>
